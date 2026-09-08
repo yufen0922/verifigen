@@ -1,0 +1,91 @@
+{
+  "mode": "synthetic_replay",
+  "model": null,
+  "dataset_sha256": "9e291b0eba1ac9cb60cad9ad145a91d4c969dd87517d8436e41a44e869ef88b8",
+  "python": "3.12.13",
+  "contract_version": "support/0.1.0",
+  "cases": 60,
+  "notes": [
+    "Synthetic replay measures deterministic mechanics, not LLM quality or production gain.",
+    "Offline full_regenerate uses a source-driven template generator, not a real LLM.",
+    "Template is a strong baseline and may match the final accuracy with lower complexity.",
+    "Live mode shares each initial candidate across strategies, counts initial usage for each LLM strategy, and sends no gold labels.",
+    "None means unavailable/undefined. Zero offline tokens means no LLM was called."
+  ],
+  "detection_case_level": {
+    "tp": 48,
+    "fp": 0,
+    "fn": 0,
+    "tn": 6,
+    "precision": 1.0,
+    "recall": 1.0,
+    "false_positive_rate": 0.0
+  },
+  "strategies": {
+    "generator_only": {
+      "cases": 60,
+      "task_success_rate": 0.1,
+      "valid_answer_rate": 0.1111111111111111,
+      "released_error_rate": 0.9,
+      "abstention_rate": 0.0,
+      "repair_success_rate": 0.0,
+      "repair_regression_rate": null,
+      "average_generation_calls": 0,
+      "average_latency_ms": 0.0009,
+      "total_tokens": 0,
+      "total_cost_usd": 0
+    },
+    "template": {
+      "cases": 60,
+      "task_success_rate": 1.0,
+      "valid_answer_rate": 1.0,
+      "released_error_rate": 0.0,
+      "abstention_rate": 0.1,
+      "repair_success_rate": 1.0,
+      "repair_regression_rate": null,
+      "average_generation_calls": 0,
+      "average_latency_ms": 0.5748833333333333,
+      "total_tokens": 0,
+      "total_cost_usd": 0
+    },
+    "field_only_ablation": {
+      "cases": 60,
+      "task_success_rate": 0.31666666666666665,
+      "valid_answer_rate": 0.24074074074074073,
+      "released_error_rate": 0.7592592592592593,
+      "abstention_rate": 0.1,
+      "repair_success_rate": 0.14583333333333334,
+      "repair_regression_rate": 0.0,
+      "average_generation_calls": 0,
+      "average_latency_ms": 0.023283333333333333,
+      "total_tokens": 0,
+      "total_cost_usd": 0
+    },
+    "full_regenerate": {
+      "cases": 60,
+      "task_success_rate": 1.0,
+      "valid_answer_rate": 1.0,
+      "released_error_rate": 0.0,
+      "abstention_rate": 0.1,
+      "repair_success_rate": 1.0,
+      "repair_regression_rate": 0.0,
+      "average_generation_calls": 0.8,
+      "average_latency_ms": 1.4332333333333334,
+      "total_tokens": 0,
+      "total_cost_usd": 0
+    },
+    "dependency_repair": {
+      "cases": 60,
+      "task_success_rate": 1.0,
+      "valid_answer_rate": 1.0,
+      "released_error_rate": 0.0,
+      "abstention_rate": 0.1,
+      "repair_success_rate": 1.0,
+      "repair_regression_rate": 0.0,
+      "average_generation_calls": 0.1,
+      "average_latency_ms": 1.0043666666666666,
+      "total_tokens": 0,
+      "total_cost_usd": 0
+    }
+  }
+}

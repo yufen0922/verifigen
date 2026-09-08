@@ -1,0 +1,16 @@
+name: Feature request
+description: Propose a use case and an acceptance condition
+title: "[Feature] "
+body:
+  - type: textarea
+    id: scenario
+    attributes:
+      label: Business scenario and current limitation
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Proposed behavior and a way to verify it
+    validations:
+      required: true

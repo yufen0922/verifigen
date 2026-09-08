@@ -1,0 +1,28 @@
+name: Bug report
+description: Report a reproducible verification, repair or runtime problem
+title: "[Bug] "
+labels: [bug]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened and what should happen?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal synthetic reproduction
+      description: Include task criteria, source, candidate and redacted verdict. Remove credentials and real customer data.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Python and VerifiGen versions
+    validations:
+      required: true
+  - type: textarea
+    id: trace
+    attributes:
+      label: Relevant trace or criterion IDs

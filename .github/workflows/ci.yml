@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: python -m pip install uv==0.11.33
+      - run: uv sync --locked --extra dev --python '${{ matrix.python-version }}'
+      - run: uv run --locked --extra dev ruff check .
+      - run: uv run --locked --extra dev ruff format --check .
+      - run: uv run --locked --extra dev mypy
+      - run: uv run --locked --extra dev pytest --cov=verifigen --cov-fail-under=85
+      - name: Rebuild annotated fixtures
+        run: |
+          uv run --locked --extra dev python scripts/build_fixtures.py
+          git diff --exit-code -- benchmarks/data
+          uv run --locked --extra dev python scripts/build_rag_eval.py
+          git diff --exit-code -- examples/rag_qa/eval_cases.jsonl
+      - run: uv run --locked --extra dev verifigen demo
+      - run: uv run --locked --extra dev python -m build

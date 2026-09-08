@@ -1,0 +1,47 @@
+{
+  "run_date": "2026-09-08",
+  "mode": "qwen",
+  "model": "qwen3.5-flash",
+  "thinking_budget": 1024,
+  "concurrency": 8,
+  "cases": 180,
+  "total_input_tokens": 866953,
+  "total_output_tokens": 641459,
+  "note": "Real model outputs over template-generated data; final outputs are scored by deterministic scenario oracles.",
+  "overall": {
+    "judge_detection_accuracy": 0.9722222222222222,
+    "bad_case_repair_success": 0.7345679012345679,
+    "final_oracle_success": 0.7611111111111111,
+    "fallback_rate": 0.08888888888888889,
+    "published_outputs": 164,
+    "wrong_releases": 27,
+    "published_oracle_precision": 0.8353658536585366,
+    "model_calls": 513
+  },
+  "scenarios": {
+    "rag": {
+      "cases": 60,
+      "judge_detection_accuracy": 0.9666666666666667,
+      "bad_case_repair_success": 0.9814814814814815,
+      "final_oracle_success": 0.9833333333333333,
+      "fallback_rate": 0.0,
+      "published_oracle_precision": 0.9833333333333333
+    },
+    "support": {
+      "cases": 60,
+      "judge_detection_accuracy": 0.95,
+      "bad_case_repair_success": 0.6111111111111112,
+      "final_oracle_success": 0.65,
+      "fallback_rate": 0.21666666666666667,
+      "published_oracle_precision": 0.8297872340425532
+    },
+    "report": {
+      "cases": 60,
+      "judge_detection_accuracy": 1.0,
+      "bad_case_repair_success": 0.6111111111111112,
+      "final_oracle_success": 0.65,
+      "fallback_rate": 0.05,
+      "published_oracle_precision": 0.6842105263157895
+    }
+  }
+}
