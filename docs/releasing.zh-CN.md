@@ -1,23 +1,20 @@
-# 发布到自己的GitHub
+# 发布与维护
 
-当前交付是源码与本地构建产物，没有创建远程仓库，也没有发布到PyPI。
-下面的步骤由仓库所有者执行；不需要把账号密码或API Key放进项目。
+项目源码已发布到 `https://github.com/yufen0922/verifigen`，`main` 分支 CI 已通过。
+仓库没有发布到 PyPI，也不会把账号密码或 API Key 放进项目。
 
-## 创建仓库
+## 克隆与推送
 
-在GitHub创建名为`verifigen`的空仓库。因为本项目已经有README和LICENSE，
-创建时不额外初始化这些文件。然后在项目目录执行：
+维护者可以使用 SSH 连接 GitHub。新的维护环境可以执行：
 
 ```bash
-git init -b main
-git add .
-git commit -m "feat: qwen judge and repair quality loop"
-git remote add origin https://github.com/YOUR_USERNAME/verifigen.git
-git push -u origin main
+git clone git@github.com:yufen0922/verifigen.git
+cd verifigen
+git switch main
 ```
 
-将`YOUR_USERNAME`替换成你的实际账号。Git提交身份使用你自己的本地配置。
-需要登录时按GitHub自己的认证流程操作，不在代码或远程URL中嵌入Token。
+提交身份使用维护者自己的本地 Git 配置。认证按 GitHub 官方流程配置，不能在代码或远程
+URL 中嵌入 Token。
 
 仓库描述可使用：Context-aware LLM judge and repair loops for generated content.
 建议Topics：`llm`、`agents`、`qwen`、`rag`、`verification`、`evaluation`。
@@ -36,23 +33,23 @@ uv run --locked --extra dev pytest --cov=verifigen --cov-fail-under=85
 uv run --locked --extra dev python -m build
 ```
 
-CI配置了Python 3.11、3.12、3.13。初次交付的本地环境是Python 3.12；
-多版本结果需要你推送后查看Actions，不能把矩阵配置当作已执行的结果。
+CI 配置并已跑通 Python 3.11、3.12、3.13。初次发布的本地验证环境是 Python 3.12；
+后续变更仍以对应提交的 GitHub Actions 结果为准。
 
-可开启主分支保护、要求CI通过、启用GitHub私密漏洞报告。项目没有虚构CI通过徽章、
-仓库Star数或PyPI下载量。建立真实地址后再添加对应徽章和项目URL。
+仓库应保护主分支、要求 CI 通过并启用 GitHub 私密漏洞报告。项目不会虚构 Star 数、
+PyPI 下载量或生产收益。
 
 ## 首个GitHub Release
 
-确认代码与文档版本一致，并完成上述检查后：
+确认代码与文档版本一致，并完成上述检查后，创建并推送带注释标签：
 
 ```bash
-git tag v0.2.0
+git tag -a v0.2.0 -m "VerifiGen v0.2.0"
 git push origin v0.2.0
 ```
 
-`release.yml`会检查标签与版本匹配、运行测试、构建wheel/sdist，并创建一个**草稿Release**。
-在GitHub核对内容后再发布草稿。这些工作流文件已提供，本次交付没有实际运行远程Actions。
+`release.yml` 会检查标签与版本匹配、运行测试、构建 wheel/sdist、生成 SHA-256 校验文件，
+并创建一个**草稿 Release**。在 GitHub 核对内容后再发布草稿。
 
 ## PyPI后续发布
 

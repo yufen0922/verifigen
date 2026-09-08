@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+No unreleased changes.
+
+## 0.2.0 — 2026-09-08
+
 - Move customer-support and data-to-text examples onto the v0.2 `QualityTask`
   and `QualityLoop` interface with scenario-specific criteria and renderers.
 - Add 120 labeled evaluation cases across six refund states and six metric
@@ -12,9 +16,6 @@
   settings for explicitly configured model endpoints.
 - Record a full 180-case `qwen3.5-flash` run with 513 real model calls and
   conservative oracle-scored per-scenario results.
-
-## 0.2.0 — 2026-09-08
-
 - Rebuild the primary architecture around Generator -> LLM Judge -> LLM Repair
   -> re-Judge instead of deterministic field repair.
 - Add structured criteria, verdicts, issues, scores, task context, budgets,
@@ -44,6 +45,3 @@
 - Add tests, developer dependency lock, CI matrix, package builds and draft
   GitHub Release automation.
 - Add English/Chinese README, architecture, learning and interview guides.
-
-Initial delivery is source and local build artifacts. Remote CI, a hosted GitHub
-release, PyPI publication and real-provider experiments have not been run.

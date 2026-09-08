@@ -3,7 +3,8 @@ include uv.lock .env.example .gitignore .gitattributes Makefile
 recursive-include docs *.md
 recursive-include examples *.py *.jsonl
 recursive-include scripts *.py
-recursive-include tests *.py
-recursive-include benchmarks *.jsonl *.json *.md
-recursive-include .github *.yml *.md
+recursive-include benchmarks/data *.jsonl *.md
+prune .github
+prune benchmarks/results
+prune tests
 global-exclude *.py[cod] .DS_Store

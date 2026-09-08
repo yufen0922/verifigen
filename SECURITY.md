@@ -19,7 +19,6 @@ The v0.1 compatibility `write_trace` also omits fact values. Full result and
 benchmark exports contain source-derived content and require appropriate access
 controls in a deployment. Hashes are not a substitute for anonymization.
 
-Do not post credentials or sensitive reproductions in a public issue. Once this
-source is hosted, use the repository's private vulnerability reporting feature
-if enabled. Repository maintainers should enable that feature before accepting
-security reports. No personal maintainer email is invented in this template.
+Do not post credentials or sensitive reproductions in a public issue. Use the
+repository's private vulnerability reporting form for security reports. No
+personal maintainer email is published or invented by this project.

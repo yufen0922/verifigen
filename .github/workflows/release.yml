@@ -25,8 +25,10 @@ jobs:
       - run: uv run --locked --extra dev mypy
       - run: uv run --locked --extra dev pytest --cov=verifigen --cov-fail-under=85
       - run: uv run --locked --extra dev python -m build
+      - name: Generate release checksums
+        run: cd dist && sha256sum * > SHA256SUMS
       - name: Create draft GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ github.ref_name }}
-        run: gh release create "$RELEASE_TAG" --verify-tag --draft --title "$RELEASE_TAG" --notes-file CHANGELOG.md dist/*
+        run: gh release create "$RELEASE_TAG" --verify-tag --draft --title "$RELEASE_TAG" --generate-notes dist/*
