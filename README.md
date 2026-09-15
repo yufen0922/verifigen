@@ -1,6 +1,6 @@
 # VerifiGen
 
-**Review generated content with an LLM Judge, then repair it against a structured issue list.**
+**A reusable quality-control runtime for LLM output: judge, repair, score, and release or fall back.**
 
 [中文说明](README.zh-CN.md) · [Architecture](docs/architecture.md) · [RAG scenario](docs/rag_policy.md) · [Evaluation](docs/evaluation.md)
 
@@ -13,17 +13,27 @@ v0.2.0 Alpha · Python 3.11+ · MIT
 VerifiGen turns a single model generation into a bounded quality loop:
 
 ```mermaid
-flowchart LR
-    A[Business context + original task + review criteria] --> B[Generator]
-    B --> C[Candidate]
-    A --> D[LLM Judge]
-    C --> D
-    D -->|pass and score meets threshold| E[Publish]
-    D -->|fail with issues| F[LLM Repair]
-    A --> F
-    C --> F
-    F --> D
-    D -->|unknown / budget exhausted / no progress| G[Fallback]
+flowchart TB
+    A["RAG / customer support / data-to-text"] --> T["QualityTask: context + criteria + schema"]
+    T --> G
+    subgraph Runtime["QualityLoop: bounded calls, rounds and execution time"]
+        G["Generator or supplied draft"] --> J["LLM Judge: status + score + issues"]
+        J -->|pass or fail| V["SchemaGate then business gates"]
+        V --> P{"QualityPolicy"}
+        P -->|actionable issues| R["LLM Repair: context + issue list"]
+        R -->|new candidate| J
+        J -->|unknown| P
+    end
+    P -->|pass + threshold + gates clear| O["Render reviewed output"]
+    P -->|stop| F["Reason-specific fallback"]
+    Runtime -->|error, timeout or repeated candidate| F
+    O -->|renderer error| F
+    O --> U["result.text"]
+    F --> U
+    style Runtime fill:#f8fafc,stroke:#94a3b8
+    style O fill:#dcfce7,stroke:#15803d
+    style F fill:#fee2e2,stroke:#b91c1c
+    style R fill:#fef3c7,stroke:#b45309
 ```
 
 The Judge receives the original prompt, full business context, explicit criteria, current candidate,
@@ -35,6 +45,22 @@ The Python runtime owns immutable context snapshots, Judge/Repair JSON protocols
 budgets, deadlines, token limits, no-progress detection, metadata-only traces, and fail-closed
 fallbacks. The LLM handles open-ended semantics such as factual grounding, completeness,
 relevance, and wording quality.
+Every run keeps its own candidate, verdict history, gate reports, token observations and decision trace.
+
+## Engineering design
+
+| Concern | Implemented behavior | Code |
+|---|---|---|
+| Cross-scenario reuse | Business adapters supply task data, criteria, schema, rendering and fallback messages; the runtime imports no domain modules | [Task protocol](src/verifigen/review.py), [adapters](src/verifigen/domains) |
+| Feedback loop | Judge and Repair receive isolated snapshots of the original task, evidence and verdict history | [QualityLoop](src/verifigen/quality.py) |
+| Release decisions | Pure decision policy, score threshold and opt-in score plateau termination | [QualityPolicy](src/verifigen/policy.py) |
+| Deterministic checks | Mandatory JSON Schema check plus pluggable async business gates; failures become repair feedback | [Gate protocol](src/verifigen/gates.py), [citation gate](src/verifigen/domains/rag_review.py) |
+| Failure handling | Bounded calls/rounds/time, repeated-candidate detection and fallback text selected by termination reason | [Runtime](src/verifigen/quality.py) |
+| Auditability | Raw model verdicts, separate gate reports and metadata-only decision/configuration traces | [Behavior tests](tests/test_quality_controls.py) |
+
+See the [architecture and decision table](docs/architecture.md) and the
+[scenario integration guide](docs/scenario_integration.md) for runnable configuration patterns.
+`QualityLoop` is the current harness runtime; the exported `Harness` class is the legacy v0.1 API.
 
 ## Model adapter
 
@@ -91,6 +117,10 @@ A full 180-case `qwen3.5-flash` run is published as a
 [per-case records](benchmarks/results/qwen3.5-flash-180/records.jsonl). Interpret the numbers with
 the model version, thinking budget, sample distribution, and independent oracle; never mix replay
 scores into live-model metrics.
+
+The published baseline contains **180 synthetic cases**, **513 real model calls**, and a
+**73.46% bad-case repair success rate** (119/162). It is a v0.2 experiment, not a measurement
+of the unreleased gates and policy changes.
 
 ## Evaluation
 
@@ -158,6 +188,8 @@ asyncio.run(main())
 | `src/verifigen/quality.py` | Bounded generate, judge, repair, and re-judge loop |
 | `src/verifigen/agents.py` | LLM Judge/Repair adapters, Qwen factory, and test doubles |
 | `src/verifigen/review.py` | Task, criterion, verdict, issue, budget, and result models |
+| `src/verifigen/policy.py` | Pure release/repair/fallback decision policy |
+| `src/verifigen/gates.py` | JSON Schema and custom async release-check protocol |
 | `src/verifigen/generators.py` | OpenAI-compatible Chat Completions adapter |
 | `src/verifigen/retrieval.py` | Local BM25 retrieval used by the RAG example |
 | `src/verifigen/domains/` | Scenario-specific criteria, schemas, and renderers |

@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import hashlib
 import json
 import os
 from collections import Counter
 from collections.abc import Callable
+from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
@@ -18,10 +20,11 @@ from verifigen import (
     JudgeVerdict,
     QualityBudget,
     QualityLoop,
+    QualityPolicy,
     QualityTask,
     make_qwen3_8b_stack,
 )
-from verifigen.domains.rag_review import make_rag_task
+from verifigen.domains.rag_review import CitationGate, make_rag_task
 from verifigen.domains.report_review import make_report_task
 from verifigen.domains.support_review import make_support_task
 from verifigen.rag_eval import score_rag_output
@@ -126,6 +129,8 @@ async def execute(args: argparse.Namespace) -> int:
     ]
     jobs = [(index, scenario, case) for index, (scenario, case) in enumerate(scenario_cases)]
     semaphore = asyncio.Semaphore(args.concurrency)
+    budget = QualityBudget(max_model_calls=5, max_repair_rounds=2)
+    policy = QualityPolicy(score_patience=args.score_patience)
 
     async def run_case(index: int, scenario: str, case: dict[str, Any]) -> dict[str, Any]:
         async with semaphore:
@@ -139,7 +144,9 @@ async def execute(args: argparse.Namespace) -> int:
             result = await QualityLoop(
                 judge=judge,
                 repairer=repairer,
-                budget=QualityBudget(max_model_calls=5, max_repair_rounds=2),
+                budget=budget,
+                policy=policy,
+                gates=(CitationGate(),) if args.citation_gate and scenario == "rag" else (),
             ).run(task, initial=case["initial"])
             first_status = result.verdicts[0].status if result.verdicts else "error"
             final_correct = not inspect(result.output, case)
@@ -159,6 +166,11 @@ async def execute(args: argparse.Namespace) -> int:
                 "output_tokens": sum(usage.output_tokens or 0 for usage in result.usages),
                 "output": result.output,
                 "best_candidate": result.best_candidate,
+                "gate_reports": [asdict(report) for report in result.gate_reports],
+                "gate_rejected_rounds": len(
+                    {report.round_index for report in result.gate_reports if report.issues}
+                ),
+                "trace": [asdict(event) for event in result.trace],
                 "verdicts": [
                     {
                         "status": verdict.status,
@@ -217,6 +229,17 @@ async def execute(args: argparse.Namespace) -> int:
     published = [record for record in records if record["status"] == "passed"]
     bad = [record for record in records if not record["initial_should_pass"]]
     summary = {
+        "evaluation_protocol_version": 2,
+        "runtime_config": {
+            "budget": asdict(budget),
+            "policy": asdict(policy),
+            "schema_gate": True,
+            "rag_citation_gate": args.citation_gate,
+        },
+        "dataset_sha256": {
+            name: hashlib.sha256(PATHS[name].read_bytes()).hexdigest() for name in selected
+        },
+        "selected_case_ids": [record["id"] for record in records],
         "mode": args.mode,
         "model": stack.generator.model if stack is not None else None,
         "thinking_budget": args.thinking_budget if stack is not None else None,
@@ -230,7 +253,9 @@ async def execute(args: argparse.Namespace) -> int:
         "overall": {
             "judge_detection_accuracy": sum(record["detection_correct"] for record in records)
             / len(records),
-            "bad_case_repair_success": sum(record["final_correct"] for record in bad) / len(bad),
+            "bad_case_repair_success": sum(record["final_correct"] for record in bad) / len(bad)
+            if bad
+            else None,
             "final_oracle_success": sum(record["final_correct"] for record in records)
             / len(records),
             "fallback_rate": sum(record["status"] == "fallback" for record in records)
@@ -242,6 +267,9 @@ async def execute(args: argparse.Namespace) -> int:
             if published
             else None,
             "model_calls": sum(record["model_calls"] for record in records),
+            "cases_with_gate_rejections": sum(
+                record["gate_rejected_rounds"] > 0 for record in records
+            ),
         },
         "scenarios": per_scenario,
         "issue_counts": dict(Counter(issue for record in records for issue in record["issue_ids"])),
@@ -271,10 +299,18 @@ def main() -> None:
     parser.add_argument("--limit-per-scenario", type=int, default=60)
     parser.add_argument("--thinking-budget", type=int, default=2048)
     parser.add_argument("--concurrency", type=int, default=6)
+    parser.add_argument(
+        "--citation-gate",
+        action="store_true",
+        help="Add RAG citation checks for a gate ablation experiment",
+    )
+    parser.add_argument("--score-patience", type=int, default=None)
     parser.add_argument("--output", type=Path, default=Path("runs/multi-scenario-eval.json"))
     args = parser.parse_args()
     if args.limit_per_scenario <= 0 or args.thinking_budget <= 0 or args.concurrency <= 0:
         parser.error("limits must be positive")
+    if args.score_patience is not None and args.score_patience < 1:
+        parser.error("--score-patience must be positive")
     try:
         code = asyncio.run(execute(args))
     except (ValueError, OSError) as exc:

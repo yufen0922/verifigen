@@ -9,8 +9,8 @@ import os
 from pathlib import Path
 from typing import Any
 
-from verifigen import QualityBudget, QualityLoop, make_qwen3_8b_stack
-from verifigen.domains.rag_review import make_rag_task
+from verifigen import QualityBudget, QualityLoop, QualityPolicy, make_qwen3_8b_stack
+from verifigen.domains.rag_review import CitationGate, make_rag_task
 from verifigen.retrieval import BM25Retriever, SearchHit
 
 DEFAULT_CORPUS = Path(__file__).with_name("policies.jsonl")
@@ -71,6 +71,8 @@ async def execute(args: argparse.Namespace) -> int:
         generator=stack.generator,
         judge=stack.judge,
         repairer=stack.repairer,
+        gates=(CitationGate(),),
+        policy=QualityPolicy(score_patience=args.score_patience),
         budget=QualityBudget(
             max_model_calls=7,
             max_repair_rounds=2,
@@ -141,6 +143,12 @@ def main() -> None:
     parser.add_argument("--top-k", type=int, default=3)
     parser.add_argument("--thinking-budget", type=int, default=2048)
     parser.add_argument("--pass-score", type=float, default=0.8)
+    parser.add_argument(
+        "--score-patience",
+        type=int,
+        default=None,
+        help="Optional number of rounds without score improvement before fallback",
+    )
     parser.add_argument("--timeout", type=float, default=60)
     parser.add_argument("--repair-demo", action="store_true")
     parser.add_argument("--output", type=Path)
@@ -149,6 +157,8 @@ def main() -> None:
         parser.error("thinking budget, top-k and timeout must be positive")
     if not 0 <= args.pass_score <= 1:
         parser.error("--pass-score must be between 0 and 1")
+    if args.score_patience is not None and args.score_patience < 1:
+        parser.error("--score-patience must be positive")
     try:
         code = asyncio.run(execute(args))
     except (ValueError, OSError) as exc:

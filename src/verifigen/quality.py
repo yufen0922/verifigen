@@ -11,9 +11,13 @@ from pathlib import Path
 from typing import Any
 
 from .agents import Judge, Repairer
+from .gates import CandidateGate, SchemaGate
 from .generators import Generator
 from .jsonutil import digest, json_copy
+from .policy import QualityPolicy
 from .review import (
+    GateReport,
+    JudgeIssue,
     JudgeRequest,
     JudgeVerdict,
     QualityBudget,
@@ -37,11 +41,15 @@ class QualityLoop:
         repairer: Repairer,
         generator: Generator | None = None,
         budget: QualityBudget | None = None,
+        policy: QualityPolicy | None = None,
+        gates: tuple[CandidateGate, ...] = (),
     ) -> None:
         self.judge = judge
         self.repairer = repairer
         self.generator = generator
         self.budget = budget or QualityBudget()
+        self.policy = policy or QualityPolicy()
+        self.gates = tuple(gates)
 
     async def run(self, task: QualityTask, *, initial: Any = _UNSET) -> QualityResult:
         started = time.monotonic()
@@ -51,15 +59,27 @@ class QualityLoop:
             task,
             source=json_copy(task.source),
             output_schema=json_copy(task.output_schema),
+            fallback_by_reason=dict(task.fallback_by_reason),
         )
         trace: list[QualityTraceEvent] = []
         verdicts: list[JudgeVerdict] = []
+        feedback_history: list[JudgeVerdict] = []
+        gate_reports: list[GateReport] = []
         usages: list[Usage] = []
         model_calls = 0
         in_flight_model_calls = 0
         repair_rounds = 0
         best_candidate: Any | None = None
         best_score = -1.0
+
+        def task_snapshot() -> QualityTask:
+            # A frozen dataclass does not freeze nested dicts exposed to adapters.
+            return replace(
+                task,
+                source=json_copy(task.source),
+                output_schema=json_copy(task.output_schema),
+                fallback_by_reason=dict(task.fallback_by_reason),
+            )
 
         def emit(event: str, **details: Any) -> None:
             trace.append(
@@ -91,9 +111,9 @@ class QualityLoop:
                     passed = False
                     output = None
                     reason = "renderer_error"
-                    text = task.fallback_text
+                    text = task.fallback_by_reason.get(reason, task.fallback_text)
             else:
-                text = task.fallback_text
+                text = task.fallback_by_reason.get(reason, task.fallback_text)
             emit("published" if passed else "fallback", reason=reason)
             return QualityResult(
                 run_id=run_id,
@@ -107,6 +127,7 @@ class QualityLoop:
                 model_calls=model_calls,
                 repair_rounds=repair_rounds,
                 usages=tuple(usages),
+                gate_reports=tuple(gate_reports),
             )
 
         def token_stop() -> str | None:
@@ -173,7 +194,9 @@ class QualityLoop:
             cost = reserve(self.judge, "judge")
             try:
                 response = await self.judge.judge(
-                    JudgeRequest(task, json_copy(candidate), round_index, tuple(verdicts))
+                    JudgeRequest(
+                        task_snapshot(), json_copy(candidate), round_index, tuple(feedback_history)
+                    )
                 )
             except asyncio.CancelledError:
                 raise
@@ -204,11 +227,11 @@ class QualityLoop:
             try:
                 response = await self.repairer.repair(
                     RepairRequest(
-                        task,
+                        task_snapshot(),
                         json_copy(candidate),
                         verdict,
                         round_index,
-                        tuple(verdicts),
+                        tuple(feedback_history),
                     )
                 )
             except asyncio.CancelledError:
@@ -234,7 +257,13 @@ class QualityLoop:
                 "started",
                 criteria=[criterion.id for criterion in task.criteria],
                 max_repair_rounds=self.budget.max_repair_rounds,
+                budget=asdict(self.budget),
+                policy=asdict(self.policy),
             )
+            try:
+                gates = (SchemaGate(task.output_schema), *self.gates)
+            except Exception:
+                return finish("invalid_schema")
             try:
                 candidate = await create_candidate() if initial is _UNSET else json_copy(initial)
             except (TypeError, ValueError):
@@ -252,17 +281,52 @@ class QualityLoop:
                 stop = token_stop()
                 if stop:
                     return finish(stop)
-                if verdict.status == "unknown":
-                    return finish("judge_unknown")
-                if verdict.status == "pass":
-                    if verdict.score < self.budget.min_pass_score:
-                        return finish("score_below_threshold")
-                    return finish("judge_passed", candidate)
-                if repair_rounds >= self.budget.max_repair_rounds:
-                    return finish("repair_budget")
+                effective_verdict = verdict
+                if verdict.status != "unknown":
+                    gate_issues: list[JudgeIssue] = []
+                    for index, gate in enumerate(gates):
+                        try:
+                            issues = await gate.check(json_copy(candidate), task_snapshot())
+                            if not isinstance(issues, tuple) or any(
+                                not isinstance(issue, JudgeIssue) for issue in issues
+                            ):
+                                raise ValueError("Gate must return a tuple of JudgeIssue")
+                        except asyncio.CancelledError:
+                            raise
+                        except Exception:
+                            emit("gate_error", gate_index=index)
+                            return finish("gate_error")
+                        gate_issues.extend(issues)
+                        gate_reports.append(GateReport(repair_rounds, index, issues))
+                        emit("gate_checked", gate_index=index, issue_count=len(issues))
+                        if index == 0 and issues:
+                            # Business gates may rely on the validated output shape.
+                            break
+                    if gate_issues:
+                        effective_verdict = replace(
+                            verdict,
+                            status="fail",
+                            summary="Deterministic release checks found issues. " + verdict.summary,
+                            issues=verdict.issues + tuple(gate_issues),
+                        )
+                feedback_history.append(effective_verdict)
+                decision = self.policy.decide(
+                    effective_verdict,
+                    min_pass_score=self.budget.min_pass_score,
+                    repair_rounds=repair_rounds,
+                    max_repair_rounds=self.budget.max_repair_rounds,
+                    history=tuple(feedback_history[:-1]),
+                )
+                emit(
+                    "decision", round=repair_rounds, action=decision.action, reason=decision.reason
+                )
+                if decision.action == "publish":
+                    return finish(decision.reason, candidate)
+                if decision.action == "fallback":
+                    return finish(decision.reason)
                 repair_rounds += 1
                 try:
-                    proposed = await repair(candidate, verdict, repair_rounds)
+                    proposed = await repair(candidate, effective_verdict, repair_rounds)
                 except RuntimeError as exc:
                     return finish(str(exc))
                 proposed_digest = digest(proposed)

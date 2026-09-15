@@ -1,6 +1,6 @@
 # VerifiGen
 
-**用 LLM Judge 校对生成内容，并让 LLM Repair 按问题清单定向修复。**
+**面向多场景的 LLM 输出质量控制运行时：校验、修复、评分与兜底输出。**
 
 [English](README.md) · [架构](docs/architecture.md) · [RAG 场景](docs/rag_policy.md) · [评测方法](docs/evaluation.md)
 
@@ -13,17 +13,27 @@ v0.2.0 Alpha · Python 3.11+ · MIT
 VerifiGen 把一次大模型生成变成一个有边界的质量闭环：
 
 ```mermaid
-flowchart LR
-    A[业务上下文 + 原始任务 + 校验标准] --> B[Generator]
-    B --> C[候选答案]
-    A --> D[LLM Judge]
-    C --> D
-    D -->|pass 且分数达标| E[发布]
-    D -->|fail + issues| F[LLM Repair]
-    A --> F
-    C --> F
-    F --> D
-    D -->|unknown / 超预算 / 无进展| G[降级]
+flowchart TB
+    A["RAG 问答 / 客服回复 / 数据报告"] --> T["QualityTask：业务快照、规则、Schema"]
+    T --> G
+    subgraph Runtime["QualityLoop：统一控制调用、轮次与执行时长"]
+        G["Generator 生成或接收已有初稿"] --> J["LLM Judge：判定、分数、问题清单"]
+        J -->|pass 或 fail| V["Schema 校验，再执行业务关卡"]
+        V --> P{"QualityPolicy 决策"}
+        P -->|存在可修复问题| R["LLM Repair：结合上下文定向修改"]
+        R -->|候选发生变化| J
+        J -->|unknown| P
+    end
+    P -->|判定通过、评分达标、关卡通过| O["渲染已审核的输出"]
+    P -->|终止| F["按终止原因返回兜底文案"]
+    Runtime -->|异常、超时或候选重复| F
+    O -->|渲染失败| F
+    O --> U["result.text"]
+    F --> U
+    style Runtime fill:#f8fafc,stroke:#94a3b8
+    style O fill:#dcfce7,stroke:#15803d
+    style F fill:#fee2e2,stroke:#b91c1c
+    style R fill:#fef3c7,stroke:#b45309
 ```
 
 Judge 不是只看最终答案。它同时拿到原始 prompt、完整业务上下文、逐项质量标准、
@@ -32,6 +42,21 @@ Repair 拿到同一份上下文和 Judge 问题，只修改错误内容，然后
 
 程序层负责上下文快照、Judge/Repair JSON 协议、调用次数、修复轮次、超时、Token 阈值、重复答案
 检测、Trace 和降级；事实语义、完整性、相关性和表达正确性由 LLM 判断。
+每次运行独立保存候选、历史判定、关卡报告、Token 观测和决策轨迹。
+
+## 工程设计与源码入口
+
+| 关注点 | 已实现能力 | 源码 |
+|---|---|---|
+| 通用框架 | 业务适配器提供上下文、规则、Schema、渲染器和兜底文案，核心运行时不导入业务模块 | [任务协议](src/verifigen/review.py)、[场景适配器](src/verifigen/domains) |
+| 校验修复 | 各轮共享原始任务语义，每个角色接收独立数据副本，结构化反馈驱动修复 | [QualityLoop](src/verifigen/quality.py) |
+| 评分决策 | 可单独测试的决策策略、评分阈值、可选的连续评分无提升终止 | [QualityPolicy](src/verifigen/policy.py) |
+| 输出关卡 | 必经的 JSON Schema 校验、可插拔异步业务校验，失败问题进入修复 | [关卡协议](src/verifigen/gates.py)、[引用校验](src/verifigen/domains/rag_review.py) |
+| 异常兜底 | 限制调用、轮次与耗时，检测重复候选，按终止原因选择场景文案 | [运行时](src/verifigen/quality.py) |
+| 可观测性 | 保留原始模型判定、独立关卡报告，记录不含正文的配置与决策 Trace | [行为测试](tests/test_quality_controls.py) |
+
+阅读顺序：[架构与决策表](docs/architecture.md) → [接入新场景](docs/scenario_integration.md) →
+核心运行时 → 行为测试。`QualityLoop` 承担当前 Harness 的职责；导出的 `Harness` 类是 v0.1 兼容接口。
 
 ## 现在使用的模型
 
@@ -82,6 +107,9 @@ python examples/rag_qa/run_qwen.py --repair-demo --output runs/rag-repair.json
 [汇总报告](benchmarks/results/qwen3.5-flash-180/report.md)和
 [180 条逐条记录](benchmarks/results/qwen3.5-flash-180/records.jsonl)；结果必须与模型版本、
 thinking budget、样本分布和独立 oracle 一起解释，不能把离线回放分数混入真实模型指标。
+
+已公开的基线为 **180 条合成样本、513 次真实模型调用、73.46% 错误初稿修复成功率（119/162）**。
+这是 v0.2 的实验结果，不代表本次未发布的关卡和策略改动已取得同样效果。
 
 单场景 RAG 评测使用确定性生成的 60 条样本：
 
@@ -144,6 +172,8 @@ asyncio.run(main())
 | `src/verifigen/quality.py` | 生成、判定、修复、再判定的有界循环 |
 | `src/verifigen/agents.py` | LLM Judge/Repair、Qwen3-8B 工厂和测试替身 |
 | `src/verifigen/review.py` | Task、Criterion、Verdict、Issue、Budget、Result |
+| `src/verifigen/policy.py` | 输出、修复、终止的独立决策策略 |
+| `src/verifigen/gates.py` | JSON Schema 和异步业务校验扩展协议 |
 | `src/verifigen/generators.py` | OpenAI-compatible Chat Completions 适配器 |
 | `src/verifigen/retrieval.py` | RAG 示例用的本地 BM25 检索 |
 | `src/verifigen/domains/rag_review.py` | 自然语言 RAG 判定标准和输出结构 |

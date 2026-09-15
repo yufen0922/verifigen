@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from ..review import Criterion, QualityTask
+from ..review import Criterion, JudgeIssue, QualityTask
 
 
 class RagAnswer(BaseModel):
@@ -37,6 +38,38 @@ RAG_CRITERIA = (
 )
 
 
+class CitationGate:
+    """Check citation membership and inline/list consistency, not entailment.
+
+    This adapter uses the RAG example's square-bracket citation convention.
+    Whether a cited passage supports a claim remains the LLM Judge's job.
+    """
+
+    async def check(self, candidate: Any, task: QualityTask) -> tuple[JudgeIssue, ...]:
+        allowed = {chunk["chunk_id"] for chunk in task.source["retrieved_chunks"]}
+        listed = set(candidate["citations"])
+        inline = set(re.findall(r"\[([^\[\]\n]+)\]", candidate["answer"]))
+        issues = []
+        if (listed | inline) - allowed:
+            issues.append(
+                JudgeIssue(
+                    "citation",
+                    "Citations refer to passages outside the retrieved context.",
+                    evidence="Unknown IDs: " + ", ".join(sorted((listed | inline) - allowed)),
+                    suggestion="Use only retrieved chunk IDs and remove unsupported claims.",
+                )
+            )
+        if listed != inline:
+            issues.append(
+                JudgeIssue(
+                    "consistency",
+                    "Inline citations and the citations list differ.",
+                    suggestion="Keep inline references and the citations list consistent.",
+                )
+            )
+        return tuple(issues)
+
+
 def make_rag_task(source: dict[str, Any]) -> QualityTask:
     return QualityTask(
         source=source,
@@ -50,7 +83,12 @@ def make_rag_task(source: dict[str, Any]) -> QualityTask:
             "检索片段可能不完整或互相冲突。不要把检索排名当作事实正确性的证明；只能依据片段原文回答。"
         ),
         fallback_text="当前检索材料不足以生成经过校验的政策答复，请转人工确认。",
+        fallback_by_reason={
+            "deadline": "校验超时，请稍后重试。",
+            "judge_unknown": "当前检索材料不足或存在冲突，请转人工确认。",
+            "gate_error": "引用或格式校验暂不可用，请稍后重试。",
+        },
     )
 
 
-__all__ = ["RAG_CRITERIA", "RagAnswer", "make_rag_task"]
+__all__ = ["CitationGate", "RAG_CRITERIA", "RagAnswer", "make_rag_task"]

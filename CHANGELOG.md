@@ -2,7 +2,17 @@
 
 ## Unreleased
 
-No unreleased changes.
+- Extract a pure `QualityPolicy` with opt-in score plateau termination.
+- Enforce Draft 2020-12 output schemas and add an async `CandidateGate` extension point;
+  gate failures become repair feedback, while unavailable checks fail closed.
+- Add a citation whitelist/consistency gate to the live RAG example.
+- Select fallback messages by termination reason and expose separate gate reports.
+- Isolate task data for every adapter call and validate finite execution limits.
+- Record budget/policy configuration and explicit release/repair/fallback decisions in traces.
+- Add gate/policy ablation switches, dataset fingerprints and per-case gate/trace records
+  to cross-scenario evaluation; handle evaluation subsets with no incorrect drafts.
+- Expand architecture diagrams, scenario integration documentation and boundary/concurrency tests.
+- Historical 180-case model results remain unchanged; these changes require a new live evaluation.
 
 ## 0.2.0 — 2026-09-08
 

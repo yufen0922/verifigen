@@ -4,6 +4,8 @@ import sys
 from collections import Counter
 from pathlib import Path
 
+import pytest
+
 from verifigen import FunctionJudge, FunctionRepairer, JudgeIssue, JudgeVerdict, QualityLoop
 from verifigen.domains.report_review import make_report_task
 from verifigen.domains.support_review import make_support_task
@@ -106,3 +108,37 @@ def test_unified_offline_evaluator_runs_all_three_scenarios(tmp_path):
     assert result["cases"] == 30
     assert set(result["scenarios"]) == {"rag", "support", "report"}
     assert all(row["final_oracle_success"] == 1 for row in result["scenarios"].values())
+
+
+@pytest.mark.parametrize("limit", [1, 10])
+def test_evaluator_records_gate_ablation_config_and_handles_no_bad_cases(tmp_path, limit):
+    output = tmp_path / "gated.json"
+    process = subprocess.run(
+        [
+            sys.executable,
+            str(ROOT / "examples/multi_scenario/evaluate.py"),
+            "--limit-per-scenario",
+            str(limit),
+            "--citation-gate",
+            "--score-patience",
+            "2",
+            "--output",
+            str(output),
+        ],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+    )
+    assert process.returncode == 0, process.stderr
+    result = json.loads(output.read_text())
+    assert result["mode"] == "offline" and result["model"] is None
+    assert result["overall"]["model_calls"] == 0
+    assert result["runtime_config"]["rag_citation_gate"] is True
+    assert result["runtime_config"]["policy"]["score_patience"] == 2
+    assert len(result["selected_case_ids"]) == limit * 3
+    assert all(len(value) == 64 for value in result["dataset_sha256"].values())
+    assert all("gate_reports" in row and "trace" in row for row in result["records"])
+    if limit == 1:
+        assert result["overall"]["bad_case_repair_success"] is None
+    else:
+        assert result["overall"]["cases_with_gate_rejections"] > 0

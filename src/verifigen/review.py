@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from collections.abc import Callable
 from dataclasses import asdict, dataclass, field
 from typing import Any, Literal
@@ -67,6 +68,7 @@ class QualityTask:
     instructions: str = ""
     fallback_text: str = "暂时无法生成经过校验的答案，请稍后重试或转人工处理。"
     renderer: Callable[[Any], str] | None = None
+    fallback_by_reason: dict[str, str] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         if not self.prompt.strip() or not self.criteria:
@@ -78,6 +80,14 @@ class QualityTask:
             raise ValueError("fallback_text cannot be empty")
         if self.renderer is not None and not callable(self.renderer):
             raise ValueError("renderer must be callable")
+        if any(
+            not isinstance(reason, str)
+            or not reason.strip()
+            or not isinstance(text, str)
+            or not text.strip()
+            for reason, text in self.fallback_by_reason.items()
+        ):
+            raise ValueError("Fallback reasons and messages must be non-empty strings")
         json_copy(self.source)
         json_copy(self.output_schema)
 
@@ -122,14 +132,19 @@ class QualityBudget:
     max_observed_tokens: int | None = None
 
     def __post_init__(self) -> None:
-        if self.max_model_calls < 0 or self.max_repair_rounds < 0:
-            raise ValueError("Budgets must be non-negative")
-        if self.deadline_seconds <= 0:
+        if any(
+            type(limit) is not int or limit < 0
+            for limit in (self.max_model_calls, self.max_repair_rounds)
+        ):
+            raise ValueError("Budgets must be non-negative integers")
+        if not math.isfinite(self.deadline_seconds) or self.deadline_seconds <= 0:
             raise ValueError("deadline_seconds must be positive")
         if not 0 <= self.min_pass_score <= 1:
             raise ValueError("min_pass_score must be between 0 and 1")
-        if self.max_observed_tokens is not None and self.max_observed_tokens <= 0:
-            raise ValueError("max_observed_tokens must be positive")
+        if self.max_observed_tokens is not None and (
+            type(self.max_observed_tokens) is not int or self.max_observed_tokens <= 0
+        ):
+            raise ValueError("max_observed_tokens must be a positive integer")
 
 
 @dataclass(frozen=True)
@@ -137,6 +152,13 @@ class QualityTraceEvent:
     event: str
     elapsed_ms: float
     details: dict[str, Any]
+
+
+@dataclass(frozen=True)
+class GateReport:
+    round_index: int
+    gate_index: int
+    issues: tuple[JudgeIssue, ...]
 
 
 @dataclass(frozen=True)
@@ -152,6 +174,7 @@ class QualityResult:
     model_calls: int
     repair_rounds: int
     usages: tuple[Usage, ...]
+    gate_reports: tuple[GateReport, ...] = ()
 
     def to_dict(self) -> dict[str, Any]:
         """Export the full result; source-derived candidate text may be sensitive."""

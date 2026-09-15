@@ -12,10 +12,13 @@ from .agents import (
     make_qwen3_8b_stack,
 )
 from .contract import Contract
+from .gates import CandidateGate, SchemaGate
 from .generators import CompatibleChatGenerator, FunctionGenerator, ReplayGenerator
+from .policy import LoopDecision, QualityPolicy
 from .quality import QualityLoop, write_quality_trace
 from .review import (
     Criterion,
+    GateReport,
     JudgeIssue,
     JudgeVerdict,
     QualityBudget,
@@ -31,6 +34,7 @@ __all__ = [
     "AgentResponseError",
     "Budget",
     "CheckResult",
+    "CandidateGate",
     "CompatibleChatGenerator",
     "Context",
     "Contract",
@@ -41,13 +45,16 @@ __all__ = [
     "FunctionJudge",
     "FunctionRepairer",
     "FunctionGenerator",
+    "GateReport",
     "Harness",
     "JudgeIssue",
     "JudgeVerdict",
     "LLMJudge",
     "LLMRepairer",
+    "LoopDecision",
     "QualityBudget",
     "QualityLoop",
+    "QualityPolicy",
     "QualityResult",
     "QualityTask",
     "Qwen3Stack",
@@ -56,6 +63,7 @@ __all__ = [
     "ReplayRepairer",
     "RuleVerifier",
     "RunResult",
+    "SchemaGate",
     "VerificationReport",
     "Verifier",
     "Violation",
