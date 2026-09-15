@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="824" viewBox="0 0 1280 824" role="img" aria-labelledby="title desc" xml:lang="zh">
+<title id="title">VerifiGen architecture</title><desc id="desc">Scenario adapters supply a shared task. Generator, Judge, deterministic gates and policy form a bounded loop. Repair returns to Judge; only reviewed output or fallback reaches the caller.</desc>
+<defs>
+<marker id="arrow-route" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto" markerUnits="userSpaceOnUse"><path d="M1 1 L6 4 L1 7" fill="none" stroke="#91a0b2" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></marker>
+<marker id="arrow-blue" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto" markerUnits="userSpaceOnUse"><path d="M1 1 L6 4 L1 7" fill="none" stroke="#88b2ff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></marker>
+<marker id="arrow-teal" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto" markerUnits="userSpaceOnUse"><path d="M1 1 L6 4 L1 7" fill="none" stroke="#70d8ca" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></marker>
+<marker id="arrow-amber" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto" markerUnits="userSpaceOnUse"><path d="M1 1 L6 4 L1 7" fill="none" stroke="#edbd70" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></marker>
+<marker id="arrow-green" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto" markerUnits="userSpaceOnUse"><path d="M1 1 L6 4 L1 7" fill="none" stroke="#83d8a3" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></marker>
+<marker id="arrow-red" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto" markerUnits="userSpaceOnUse"><path d="M1 1 L6 4 L1 7" fill="none" stroke="#f099a5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></marker>
+</defs>
+<rect x="0" y="0" width="1280" height="824" rx="0" fill="#0d1117"/>
+<rect x="40" y="34" width="7" height="20" rx="2" fill="#70d8ca"/>
+<text x="59" y="50" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="17" font-weight="700" fill="#edf2f7" text-anchor="start" data-max-width="200"><tspan x="59" dy="0">VERIFIGEN</tspan></text>
+<text x="1240" y="50" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="15" font-weight="400" fill="#a5b3c2" text-anchor="end" data-max-width="300"><tspan x="1240" dy="0">01 / ARCHITECTURE</tspan></text>
+<text x="40" y="98" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="34" font-weight="650" fill="#edf2f7" text-anchor="start" data-max-width="1200"><tspan x="40" dy="0">一套质量闭环，复用到多个场景。</tspan></text>
+<text x="40" y="131" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="19" font-weight="400" fill="#a5b3c2" text-anchor="start" data-max-width="1200"><tspan x="40" dy="0">显式业务上下文 · 结构化修复反馈 · 受控输出</tspan></text>
+<path d="M40 158 H1240" fill="none" stroke="#34404e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="40" y="196" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="15" font-weight="650" fill="#a5b3c2" text-anchor="start" data-max-width="196"><tspan x="40" dy="0">场景适配层</tspan></text>
+<rect x="40" y="225" width="5" height="5" rx="1" fill="#70d8ca"/>
+<text x="57" y="236" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="19" font-weight="400" fill="#edf2f7" text-anchor="start" data-max-width="180"><tspan x="57" dy="0">RAG 问答</tspan></text>
+<rect x="40" y="255" width="5" height="5" rx="1" fill="#70d8ca"/>
+<text x="57" y="266" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="19" font-weight="400" fill="#edf2f7" text-anchor="start" data-max-width="180"><tspan x="57" dy="0">客服回复</tspan></text>
+<rect x="40" y="285" width="5" height="5" rx="1" fill="#70d8ca"/>
+<text x="57" y="296" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="19" font-weight="400" fill="#edf2f7" text-anchor="start" data-max-width="180"><tspan x="57" dy="0">数据报告</tspan></text>
+<path d="M40 314 H226" fill="none" stroke="#34404e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="40" y="348" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="23" font-weight="650" fill="#edf2f7" text-anchor="start" data-max-width="188"><tspan x="40" dy="0">QualityTask</tspan></text>
+<text x="40" y="383" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="18" font-weight="400" fill="#a5b3c2" text-anchor="start" data-max-width="190"><tspan x="40" dy="0">原始任务与业务证据</tspan><tspan x="40" dy="25.2">逐项质量规则</tspan><tspan x="40" dy="25.2">输出 Schema</tspan><tspan x="40" dy="25.2">渲染器与兜底文案</tspan></text>
+<text x="40" y="581" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="17" font-weight="600" fill="#70d8ca" text-anchor="start" data-max-width="190"><tspan x="40" dy="0">替换场景适配器</tspan></text>
+<text x="40" y="606" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="17" font-weight="400" fill="#a5b3c2" text-anchor="start" data-max-width="190"><tspan x="40" dy="0">复用同一运行时</tspan></text>
+<rect x="264" y="196" width="728" height="432" rx="8" fill="#161b22" stroke="#34404e" stroke-width="1.2"/>
+<text x="284" y="228" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="23" font-weight="650" fill="#edf2f7" text-anchor="start" data-max-width="290"><tspan x="284" dy="0">QualityLoop</tspan></text>
+<text x="972" y="227" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="15" font-weight="650" fill="#70d8ca" text-anchor="end" data-max-width="270"><tspan x="972" dy="0">有界 Agent Loop</tspan></text>
+<text x="284" y="258" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="17" font-weight="400" fill="#a5b3c2" text-anchor="start" data-max-width="688"><tspan x="284" dy="0">每个角色接收独立的任务快照，复用相同证据与约束。</tspan></text>
+<path d="M226 344 H284" fill="none" stroke="#91a0b2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-route)"/>
+<path d="M440 344 H464" fill="none" stroke="#91a0b2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-route)"/>
+<path d="M620 344 H644" fill="none" stroke="#91a0b2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-route)"/>
+<path d="M800 344 H824" fill="none" stroke="#91a0b2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-route)"/>
+<rect x="284" y="284" width="156" height="126" rx="8" fill="#182844" stroke="#34404e" stroke-width="1.2"/>
+<rect x="300" y="300" width="26" height="24" rx="4" fill="#88b2ff"/>
+<text x="313" y="317" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="14" font-weight="700" fill="#0d1117" text-anchor="middle" data-max-width="24"><tspan x="313" dy="0">01</tspan></text>
+<text x="300" y="350" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="23" font-weight="650" fill="#88b2ff" text-anchor="start" data-max-width="124"><tspan x="300" dy="0">Generator</tspan></text>
+<text x="300" y="377" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="17" font-weight="400" fill="#a5b3c2" text-anchor="start" data-max-width="128"><tspan x="300" dy="0">生成候选</tspan><tspan x="300" dy="23.799999999999997">或接收初稿</tspan></text>
+<rect x="464" y="284" width="156" height="126" rx="8" fill="#182844" stroke="#34404e" stroke-width="1.2"/>
+<rect x="480" y="300" width="26" height="24" rx="4" fill="#88b2ff"/>
+<text x="493" y="317" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="14" font-weight="700" fill="#0d1117" text-anchor="middle" data-max-width="24"><tspan x="493" dy="0">02</tspan></text>
+<text x="480" y="350" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="23" font-weight="650" fill="#88b2ff" text-anchor="start" data-max-width="124"><tspan x="480" dy="0">Judge</tspan></text>
+<text x="480" y="377" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="17" font-weight="400" fill="#a5b3c2" text-anchor="start" data-max-width="128"><tspan x="480" dy="0">分数与判定</tspan><tspan x="480" dy="23.799999999999997">结构化问题</tspan></text>
+<rect x="644" y="284" width="156" height="126" rx="8" fill="#142f2c" stroke="#34404e" stroke-width="1.2"/>
+<rect x="660" y="300" width="26" height="24" rx="4" fill="#70d8ca"/>
+<text x="673" y="317" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="14" font-weight="700" fill="#0d1117" text-anchor="middle" data-max-width="24"><tspan x="673" dy="0">03</tspan></text>
+<text x="660" y="350" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="23" font-weight="650" fill="#70d8ca" text-anchor="start" data-max-width="124"><tspan x="660" dy="0">Gates</tspan></text>
+<text x="660" y="377" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="17" font-weight="400" fill="#a5b3c2" text-anchor="start" data-max-width="128"><tspan x="660" dy="0">JSON Schema</tspan><tspan x="660" dy="23.799999999999997">业务校验关卡</tspan></text>
+<rect x="824" y="284" width="156" height="126" rx="8" fill="#142f2c" stroke="#34404e" stroke-width="1.2"/>
+<rect x="840" y="300" width="26" height="24" rx="4" fill="#70d8ca"/>
+<text x="853" y="317" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="14" font-weight="700" fill="#0d1117" text-anchor="middle" data-max-width="24"><tspan x="853" dy="0">04</tspan></text>
+<text x="840" y="350" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="23" font-weight="650" fill="#70d8ca" text-anchor="start" data-max-width="124"><tspan x="840" dy="0">Policy</tspan></text>
+<text x="840" y="377" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="17" font-weight="400" fill="#a5b3c2" text-anchor="start" data-max-width="128"><tspan x="840" dy="0">输出 / 修复</tspan><tspan x="840" dy="23.799999999999997">或终止</tspan></text>
+<path d="M980 344 H1016" fill="none" stroke="#83d8a3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-green)"/>
+<text x="1016" y="227" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="15" font-weight="650" fill="#a5b3c2" text-anchor="start" data-max-width="224"><tspan x="1016" dy="0">输出边界</tspan></text>
+<rect x="1016" y="284" width="224" height="126" rx="8" fill="#173125" stroke="#34404e" stroke-width="1.2"/>
+<text x="1034" y="320" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="21" font-weight="650" fill="#83d8a3" text-anchor="start" data-max-width="190"><tspan x="1034" dy="0">审核后输出</tspan></text>
+<text x="1034" y="353" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="17" font-weight="400" fill="#a5b3c2" text-anchor="start" data-max-width="192"><tspan x="1034" dy="0">判定通过且评分达标</tspan><tspan x="1034" dy="23.799999999999997">全部关卡通过</tspan></text>
+<path d="M902 410 V536 H800" fill="none" stroke="#edbd70" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-amber)"/>
+<text x="822" y="514" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="16" font-weight="400" fill="#edbd70" text-anchor="start" data-max-width="78"><tspan x="822" dy="0">问题反馈</tspan></text>
+<path d="M902 444 H1000 V548 H1016" fill="none" stroke="#f099a5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-red)"/>
+<text x="938" y="436" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="16" font-weight="400" fill="#f099a5" text-anchor="start" data-max-width="55"><tspan x="938" dy="0">终止</tspan></text>
+<path d="M542 488 V410" fill="none" stroke="#edbd70" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-amber)"/>
+<text x="556" y="458" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="17" font-weight="600" fill="#edbd70" text-anchor="start" data-max-width="160"><tspan x="556" dy="0">重新校验</tspan></text>
+<rect x="464" y="488" width="336" height="96" rx="8" fill="#34291a" stroke="#34404e" stroke-width="1.2"/>
+<text x="484" y="522" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="23" font-weight="650" fill="#edbd70" text-anchor="start" data-max-width="296"><tspan x="484" dy="0">LLM Repair</tspan></text>
+<text x="484" y="554" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="18" font-weight="400" fill="#a5b3c2" text-anchor="start" data-max-width="296"><tspan x="484" dy="0">结合上下文，按问题清单定向修复</tspan></text>
+<text x="284" y="608" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="16" font-weight="400" fill="#a5b3c2" text-anchor="start" data-max-width="688"><tspan x="284" dy="0">unknown 跳过关卡并终止；修改后的候选必须复检。</tspan></text>
+<rect x="1016" y="488" width="224" height="126" rx="8" fill="#361e26" stroke="#34404e" stroke-width="1.2"/>
+<text x="1034" y="525" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="23" font-weight="650" fill="#f099a5" text-anchor="start" data-max-width="188"><tspan x="1034" dy="0">场景化兜底</tspan></text>
+<text x="1034" y="558" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="17" font-weight="400" fill="#a5b3c2" text-anchor="start" data-max-width="192"><tspan x="1034" dy="0">按终止原因选择文案</tspan><tspan x="1034" dy="23.799999999999997">不发布未通过的候选</tspan></text>
+<rect x="40" y="654" width="1200" height="100" rx="8" fill="#161b22" stroke="#34404e" stroke-width="1.2"/>
+<text x="60" y="689" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="22" font-weight="650" fill="#edf2f7" text-anchor="start" data-max-width="200"><tspan x="60" dy="0">Harness</tspan></text>
+<text x="60" y="720" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="17" font-weight="400" fill="#a5b3c2" text-anchor="start" data-max-width="200"><tspan x="60" dy="0">运行时控制层</tspan></text>
+<path d="M266 676 V732" fill="none" stroke="#34404e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="284" y="689" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="20" font-weight="600" fill="#edf2f7" text-anchor="start" data-max-width="276"><tspan x="284" dy="0">执行预算</tspan></text>
+<text x="284" y="720" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="17" font-weight="400" fill="#a5b3c2" text-anchor="start" data-max-width="276"><tspan x="284" dy="0">调用次数 / 轮次 / Token</tspan></text>
+<path d="M588 676 V732" fill="none" stroke="#34404e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="606" y="689" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="20" font-weight="600" fill="#edf2f7" text-anchor="start" data-max-width="276"><tspan x="606" dy="0">终止控制</tspan></text>
+<text x="606" y="720" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="17" font-weight="400" fill="#a5b3c2" text-anchor="start" data-max-width="276"><tspan x="606" dy="0">超时 / 重复 / 评分停滞</tspan></text>
+<path d="M938 676 V732" fill="none" stroke="#34404e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="956" y="689" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="20" font-weight="600" fill="#edf2f7" text-anchor="start" data-max-width="276"><tspan x="956" dy="0">独立运行状态</tspan></text>
+<text x="956" y="720" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="17" font-weight="400" fill="#a5b3c2" text-anchor="start" data-max-width="276"><tspan x="956" dy="0">快照 / 关卡报告 / Trace</tspan></text>
+<text x="40" y="790" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="14" font-weight="650" fill="#70d8ca" text-anchor="start" data-max-width="190"><tspan x="40" dy="0">独立评测</tspan></text>
+<text x="208" y="790" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="17" font-weight="400" fill="#a5b3c2" text-anchor="start" data-max-width="1032"><tspan x="208" dy="0">场景 Oracle、模型原始判定与关卡消融；评测真值不参与运行时修复。</tspan></text>
+</svg>

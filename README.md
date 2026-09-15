@@ -12,29 +12,12 @@ v0.2.0 Alpha · Python 3.11+ · MIT
 
 VerifiGen turns a single model generation into a bounded quality loop:
 
-```mermaid
-flowchart TB
-    A["RAG / customer support / data-to-text"] --> T["QualityTask: context + criteria + schema"]
-    T --> G
-    subgraph Runtime["QualityLoop: bounded calls, rounds and execution time"]
-        G["Generator or supplied draft"] --> J["LLM Judge: status + score + issues"]
-        J -->|pass or fail| V["SchemaGate then business gates"]
-        V --> P{"QualityPolicy"}
-        P -->|actionable issues| R["LLM Repair: context + issue list"]
-        R -->|new candidate| J
-        J -->|unknown| P
-    end
-    P -->|pass + threshold + gates clear| O["Render reviewed output"]
-    P -->|stop| F["Reason-specific fallback"]
-    Runtime -->|error, timeout or repeated candidate| F
-    O -->|renderer error| F
-    O --> U["result.text"]
-    F --> U
-    style Runtime fill:#f8fafc,stroke:#94a3b8
-    style O fill:#dcfce7,stroke:#15803d
-    style F fill:#fee2e2,stroke:#b91c1c
-    style R fill:#fef3c7,stroke:#b45309
-```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/architecture-en-dark.svg">
+  <img src="docs/assets/architecture-en-light.svg" alt="VerifiGen architecture: scenario adapters supply a QualityTask to the bounded Generator, Judge, Gates and Policy pipeline. Structured feedback drives Repair and re-Judge. The runtime releases reviewed output or returns a reason-specific fallback." width="1280">
+</picture>
+
+[Full-size diagram](docs/assets/architecture-en-light.svg) · [Detailed decision flow](docs/assets/decision-flow-en-light.svg)
 
 The Judge receives the original prompt, full business context, explicit criteria, current candidate,
 and prior verdicts. It returns `pass`, `fail`, or `unknown`, a score from 0 to 1, and a structured

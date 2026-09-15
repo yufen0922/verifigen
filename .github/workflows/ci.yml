@@ -25,6 +25,8 @@ jobs:
       - run: uv sync --locked --extra dev --python '${{ matrix.python-version }}'
       - run: uv run --locked --extra dev ruff check .
       - run: uv run --locked --extra dev ruff format --check .
+      - name: Check generated documentation diagrams
+        run: uv run --locked --extra dev python scripts/render_diagrams.py --check
       - run: uv run --locked --extra dev mypy
       - run: uv run --locked --extra dev pytest --cov=verifigen --cov-fail-under=85
       - name: Rebuild annotated fixtures

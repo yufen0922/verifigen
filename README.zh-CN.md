@@ -12,29 +12,12 @@ v0.2.0 Alpha · Python 3.11+ · MIT
 
 VerifiGen 把一次大模型生成变成一个有边界的质量闭环：
 
-```mermaid
-flowchart TB
-    A["RAG 问答 / 客服回复 / 数据报告"] --> T["QualityTask：业务快照、规则、Schema"]
-    T --> G
-    subgraph Runtime["QualityLoop：统一控制调用、轮次与执行时长"]
-        G["Generator 生成或接收已有初稿"] --> J["LLM Judge：判定、分数、问题清单"]
-        J -->|pass 或 fail| V["Schema 校验，再执行业务关卡"]
-        V --> P{"QualityPolicy 决策"}
-        P -->|存在可修复问题| R["LLM Repair：结合上下文定向修改"]
-        R -->|候选发生变化| J
-        J -->|unknown| P
-    end
-    P -->|判定通过、评分达标、关卡通过| O["渲染已审核的输出"]
-    P -->|终止| F["按终止原因返回兜底文案"]
-    Runtime -->|异常、超时或候选重复| F
-    O -->|渲染失败| F
-    O --> U["result.text"]
-    F --> U
-    style Runtime fill:#f8fafc,stroke:#94a3b8
-    style O fill:#dcfce7,stroke:#15803d
-    style F fill:#fee2e2,stroke:#b91c1c
-    style R fill:#fef3c7,stroke:#b45309
-```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/architecture-zh-dark.svg">
+  <img src="docs/assets/architecture-zh-light.svg" alt="VerifiGen 架构：场景适配器提供 QualityTask，进入有界的生成、校验、关卡与策略流程；结构化反馈驱动定向修复和复检，运行时决定发布审核输出或按原因兜底。" width="1280">
+</picture>
+
+[查看大图](docs/assets/architecture-zh-light.svg) · [详细决策流程](docs/architecture.md#状态机)
 
 Judge 不是只看最终答案。它同时拿到原始 prompt、完整业务上下文、逐项质量标准、
 当前候选和历史判定，返回 `pass/fail/unknown`、0～1 分数以及结构化问题清单。

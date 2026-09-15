@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="860" viewBox="0 0 1280 860" role="img" aria-labelledby="title desc" xml:lang="en">
+<title id="title">VerifiGen output decisions</title><desc id="desc">Assessment feeds three decisions: release when status, score and gates pass; repair actionable failures within limits; otherwise return fallback. Every changed repair is reviewed again.</desc>
+<defs>
+<marker id="arrow-route" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto" markerUnits="userSpaceOnUse"><path d="M1 1 L6 4 L1 7" fill="none" stroke="#91a0b2" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></marker>
+<marker id="arrow-blue" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto" markerUnits="userSpaceOnUse"><path d="M1 1 L6 4 L1 7" fill="none" stroke="#88b2ff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></marker>
+<marker id="arrow-teal" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto" markerUnits="userSpaceOnUse"><path d="M1 1 L6 4 L1 7" fill="none" stroke="#70d8ca" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></marker>
+<marker id="arrow-amber" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto" markerUnits="userSpaceOnUse"><path d="M1 1 L6 4 L1 7" fill="none" stroke="#edbd70" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></marker>
+<marker id="arrow-green" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto" markerUnits="userSpaceOnUse"><path d="M1 1 L6 4 L1 7" fill="none" stroke="#83d8a3" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></marker>
+<marker id="arrow-red" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto" markerUnits="userSpaceOnUse"><path d="M1 1 L6 4 L1 7" fill="none" stroke="#f099a5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></marker>
+</defs>
+<rect x="0" y="0" width="1280" height="860" rx="0" fill="#0d1117"/>
+<rect x="40" y="34" width="7" height="20" rx="2" fill="#70d8ca"/>
+<text x="59" y="50" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="17" font-weight="700" fill="#edf2f7" text-anchor="start" data-max-width="200"><tspan x="59" dy="0">VERIFIGEN</tspan></text>
+<text x="1240" y="50" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="15" font-weight="400" fill="#a5b3c2" text-anchor="end" data-max-width="300"><tspan x="1240" dy="0">02 / DECISION FLOW</tspan></text>
+<text x="40" y="98" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="34" font-weight="650" fill="#edf2f7" text-anchor="start" data-max-width="1200"><tspan x="40" dy="0">Score. Repair. Stop.</tspan></text>
+<text x="40" y="131" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="19" font-weight="400" fill="#a5b3c2" text-anchor="start" data-max-width="1200"><tspan x="40" dy="0">The policy owns the next action. The model supplies evidence and feedback.</tspan></text>
+<path d="M40 158 H1240" fill="none" stroke="#34404e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="40" y="194" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="15" font-weight="650" fill="#a5b3c2" text-anchor="start" data-max-width="330"><tspan x="40" dy="0">01 / ASSESS</tspan></text>
+<text x="424" y="194" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="15" font-weight="650" fill="#a5b3c2" text-anchor="start" data-max-width="330"><tspan x="424" dy="0">02 / APPLY POLICY</tspan></text>
+<text x="944" y="194" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="15" font-weight="650" fill="#a5b3c2" text-anchor="start" data-max-width="330"><tspan x="944" dy="0">03 / EXECUTE</tspan></text>
+<rect x="40" y="220" width="312" height="400" rx="8" fill="#161b22" stroke="#34404e" stroke-width="1.2"/>
+<text x="60" y="257" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="23" font-weight="650" fill="#edf2f7" text-anchor="start" data-max-width="274"><tspan x="60" dy="0">Candidate + context</tspan></text>
+<text x="60" y="288" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="17" font-weight="400" fill="#a5b3c2" text-anchor="start" data-max-width="274"><tspan x="60" dy="0">Generated or supplied draft</tspan></text>
+<path d="M60 310 H332" fill="none" stroke="#34404e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="60" y="347" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="23" font-weight="650" fill="#88b2ff" text-anchor="start" data-max-width="272"><tspan x="60" dy="0">LLM Judge</tspan></text>
+<text x="60" y="378" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="17" font-weight="400" fill="#a5b3c2" text-anchor="start" data-max-width="272"><tspan x="60" dy="0">Status + score + issue list</tspan><tspan x="60" dy="23.799999999999997">Original verdict kept for audit</tspan></text>
+<path d="M60 425 H332" fill="none" stroke="#34404e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="60" y="461" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="22" font-weight="650" fill="#70d8ca" text-anchor="start" data-max-width="272"><tspan x="60" dy="0">Deterministic gates</tspan></text>
+<text x="60" y="493" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="17" font-weight="400" fill="#a5b3c2" text-anchor="start" data-max-width="272"><tspan x="60" dy="0">Schema first, business rules next</tspan><tspan x="60" dy="23.799999999999997">Violations become repair issues</tspan></text>
+<text x="60" y="584" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="17" font-weight="400" fill="#f099a5" text-anchor="start" data-max-width="272"><tspan x="60" dy="0">unknown: skip gates, then stop</tspan></text>
+<path d="M352 420 H384" fill="none" stroke="#91a0b2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M384 278 V580" fill="none" stroke="#91a0b2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M384 278 H424" fill="none" stroke="#91a0b2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-route)"/>
+<path d="M384 434 H424" fill="none" stroke="#91a0b2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-route)"/>
+<path d="M384 580 V590" fill="none" stroke="#91a0b2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M384 590 H424" fill="none" stroke="#91a0b2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-route)"/>
+<rect x="424" y="220" width="452" height="116" rx="8" fill="#173125" stroke="#34404e" stroke-width="1.2"/>
+<rect x="424" y="236" width="3" height="84" rx="1" fill="#83d8a3"/>
+<text x="444" y="254" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="22" font-weight="600" fill="#83d8a3" text-anchor="start" data-max-width="412"><tspan x="444" dy="0">All release conditions met</tspan></text>
+<text x="444" y="286" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="18" font-weight="400" fill="#a5b3c2" text-anchor="start" data-max-width="410"><tspan x="444" dy="0">pass + score at or above threshold</tspan><tspan x="444" dy="25.2">Schema and business gates are clear</tspan></text>
+<path d="M876 278 H944" fill="none" stroke="#83d8a3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-green)"/>
+<rect x="944" y="220" width="280" height="116" rx="8" fill="#173125" stroke="#34404e" stroke-width="1.2"/>
+<text x="964" y="254" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="23" font-weight="650" fill="#83d8a3" text-anchor="start" data-max-width="240"><tspan x="964" dy="0">Render + release</tspan></text>
+<text x="964" y="286" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="17" font-weight="400" fill="#a5b3c2" text-anchor="start" data-max-width="240"><tspan x="964" dy="0">Reviewed candidate</tspan><tspan x="964" dy="23.799999999999997">result.output + result.text</tspan></text>
+<rect x="424" y="376" width="452" height="116" rx="8" fill="#34291a" stroke="#34404e" stroke-width="1.2"/>
+<rect x="424" y="392" width="3" height="84" rx="1" fill="#edbd70"/>
+<text x="444" y="410" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="22" font-weight="600" fill="#edbd70" text-anchor="start" data-max-width="412"><tspan x="444" dy="0">Actionable failure, within limits</tspan></text>
+<text x="444" y="442" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="18" font-weight="400" fill="#a5b3c2" text-anchor="start" data-max-width="410"><tspan x="444" dy="0">fail + issues + remaining repair rounds</tspan><tspan x="444" dy="25.2">Optional score plateau stop not reached</tspan></text>
+<path d="M876 434 H944" fill="none" stroke="#edbd70" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-amber)"/>
+<rect x="944" y="376" width="280" height="116" rx="8" fill="#34291a" stroke="#34404e" stroke-width="1.2"/>
+<text x="964" y="410" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="23" font-weight="650" fill="#edbd70" text-anchor="start" data-max-width="240"><tspan x="964" dy="0">Repair</tspan></text>
+<text x="964" y="442" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="17" font-weight="400" fill="#a5b3c2" text-anchor="start" data-max-width="240"><tspan x="964" dy="0">Same evidence, new draft</tspan><tspan x="964" dy="23.799999999999997">Re-check the changed draft</tspan></text>
+<rect x="424" y="532" width="452" height="116" rx="8" fill="#361e26" stroke="#34404e" stroke-width="1.2"/>
+<rect x="424" y="548" width="3" height="84" rx="1" fill="#f099a5"/>
+<text x="444" y="566" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="22" font-weight="600" fill="#f099a5" text-anchor="start" data-max-width="412"><tspan x="444" dy="0">Cannot release or continue</tspan></text>
+<text x="444" y="598" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="18" font-weight="400" fill="#a5b3c2" text-anchor="start" data-max-width="410"><tspan x="444" dy="0">unknown / low-score pass</tspan><tspan x="444" dy="25.2">Repair limit / optional score plateau</tspan></text>
+<path d="M876 590 H944" fill="none" stroke="#f099a5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-red)"/>
+<rect x="944" y="532" width="280" height="116" rx="8" fill="#361e26" stroke="#34404e" stroke-width="1.2"/>
+<text x="964" y="566" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="23" font-weight="650" fill="#f099a5" text-anchor="start" data-max-width="240"><tspan x="964" dy="0">Fallback</tspan></text>
+<text x="964" y="598" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="17" font-weight="400" fill="#a5b3c2" text-anchor="start" data-max-width="240"><tspan x="964" dy="0">Text selected by stop reason</tspan><tspan x="964" dy="23.799999999999997">result.output = None</tspan></text>
+<path d="M1224 434 H1252 V700 H196 V620" fill="none" stroke="#edbd70" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-amber)"/>
+<rect x="443" y="682" width="477" height="35" rx="0" fill="#0d1117"/>
+<text x="682" y="706" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="20" font-weight="600" fill="#edbd70" text-anchor="middle" data-max-width="470"><tspan x="682" dy="0">Changed candidate returns to Judge + Gates</tspan></text>
+<path d="M1084 492 V532" fill="none" stroke="#f099a5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-red)"/>
+<text x="1098" y="517" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="16" font-weight="400" fill="#f099a5" text-anchor="start" data-max-width="118"><tspan x="1098" dy="0">repeat</tspan></text>
+<rect x="40" y="746" width="1200" height="74" rx="8" fill="#161b22" stroke="#34404e" stroke-width="1.2"/>
+<text x="60" y="778" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="15" font-weight="650" fill="#f099a5" text-anchor="start" data-max-width="180"><tspan x="60" dy="0">AT ANY STAGE</tspan></text>
+<text x="256" y="778" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="18" font-weight="400" fill="#a5b3c2" text-anchor="start" data-max-width="960"><tspan x="256" dy="0">Call / token limit, timeout, provider error or unavailable gate → fallback.</tspan></text>
+<text x="256" y="804" font-family="Inter,Segoe UI,PingFang SC,Microsoft YaHei,Arial,sans-serif" font-size="17" font-weight="400" fill="#a5b3c2" text-anchor="start" data-max-width="960"><tspan x="256" dy="0">Renderer errors also fall back. The best historical candidate is diagnostic only.</tspan></text>
+</svg>

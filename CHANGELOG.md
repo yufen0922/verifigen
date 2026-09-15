@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add original, reproducible SVG architecture and decision diagrams in English and Chinese,
+  with light/dark theme variants for GitHub documentation.
 - Extract a pure `QualityPolicy` with opt-in score plateau termination.
 - Enforce Draft 2020-12 output schemas and add an async `CandidateGate` extension point;
   gate failures become repair feedback, while unavailable checks fail closed.

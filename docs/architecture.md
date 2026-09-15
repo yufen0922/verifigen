@@ -33,25 +33,12 @@ Python 运行时负责状态隔离、输出决策、预算和终止。场景适�
 
 ## 状态机
 
-```mermaid
-stateDiagram-v2
-    [*] --> Generate: 未提供 initial
-    [*] --> Judge: 已提供 initial
-    Generate --> Judge
-    Judge --> Gates: pass 或 fail
-    Gates --> Decide: 校验完成
-    Gates --> Fallback: 校验不可用
-    Decide --> Publish: pass 且分数达标且关卡通过
-    Decide --> Repair: 存在问题且允许继续
-    Repair --> Judge: 候选发生变化
-    Judge --> Fallback: unknown / 调用失败
-    Decide --> Fallback: 低分通过 / 轮次耗尽 / 评分停滞
-    Repair --> Fallback: 无进展 / 调用失败
-    Generate --> Fallback: 生成失败
-    Publish --> Fallback: 渲染失败
-    Publish --> [*]
-    Fallback --> [*]
-```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/decision-flow-zh-dark.svg">
+  <img src="assets/decision-flow-zh-light.svg" alt="质量循环决策：Judge 与确定性关卡评估候选，Policy 在满足发布条件时输出，有可修复问题且预算允许时继续修复，否则兜底。变更候选返回复检，重复候选和运行异常终止循环。" width="1280">
+</picture>
+
+[查看大图](assets/decision-flow-zh-light.svg) · [English diagram](assets/decision-flow-en-light.svg) · [图源与维护](assets/README.md)
 
 默认最多 7 次模型调用、2 轮修复、120 秒。完整生成并修复两轮时最多为：
 1 次 Generator + 3 次 Judge + 2 次 Repair = 6 次，留 1 次余量。调用失败也计入预算。
