@@ -2,7 +2,7 @@
 
 **A reusable quality-control runtime for LLM output: judge, repair, score, and release or fall back.**
 
-[中文说明](README.zh-CN.md) · [Architecture](docs/architecture.md) · [RAG scenario](docs/rag_policy.md) · [Evaluation](docs/evaluation.md)
+[中文说明](README.zh-CN.md) · [Architecture](docs/architecture.md) · [RAG scenario](docs/rag_policy.md) · [Evaluation](docs/evaluation.md) · [RAGTruth](docs/ragtruth_evaluation.md)
 
 [![CI](https://github.com/yufen0922/verifigen/actions/workflows/ci.yml/badge.svg)](https://github.com/yufen0922/verifigen/actions/workflows/ci.yml)
 
@@ -104,6 +104,14 @@ scores into live-model metrics.
 The published baseline contains **180 synthetic cases**, **513 real model calls**, and a
 **73.46% bad-case repair success rate** (119/162). It is a v0.2 experiment, not a measurement
 of the unreleased gates and policy changes.
+
+The project also uses [RAGTruth](https://github.com/ParticleMedia/RAGTruth) as an external
+benchmark. The first fixed cohort contains 600 responses: 200 each for QA, summarization, and
+data-to-text, balanced between actionable hallucination labels and clean responses. The 180-case
+development split and 420-case evaluation split are isolated by `source_id`. Data validation and
+deterministic selection are complete; full Qwen runs and post-repair blind-review metrics for these
+600 cases are not published yet. The 73.46% result above belongs only to the synthetic suite. See
+the [RAGTruth evaluation protocol](docs/ragtruth_evaluation.md).
 
 ## Evaluation
 

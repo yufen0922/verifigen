@@ -25,3 +25,12 @@ Regenerate with `python scripts/build_fixtures.py`; review the resulting diff.
 The builder and gold scorer must remain independent of production verifiers.
 Additional models, human audit, richer policy states and diverse paraphrases
 are required before using the corpus for broader research claims.
+
+## External benchmark: RAGTruth
+
+The project also uses RAGTruth as a public external benchmark. A fixed 600-response cohort covers
+QA, summarization, and data-to-text with 200 responses per task, balanced between actionable
+hallucination labels and clean responses. Development and evaluation are isolated by `source_id`.
+This external cohort is separate from VerifiBench and the 180-case synthetic Qwen baseline. See
+[`docs/ragtruth_evaluation.md`](../../docs/ragtruth_evaluation.md) for dataset statistics, hashes,
+sampling rules, and the boundary between completed data preparation and pending model evaluation.

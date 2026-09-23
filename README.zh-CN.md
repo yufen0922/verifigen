@@ -2,7 +2,7 @@
 
 **面向多场景的 LLM 输出质量控制运行时：校验、修复、评分与兜底输出。**
 
-[English](README.md) · [架构](docs/architecture.md) · [RAG 场景](docs/rag_policy.md) · [评测方法](docs/evaluation.md)
+[English](README.md) · [架构](docs/architecture.md) · [RAG 场景](docs/rag_policy.md) · [评测方法](docs/evaluation.md) · [RAGTruth 公开集](docs/ragtruth_evaluation.md)
 
 [![CI](https://github.com/yufen0922/verifigen/actions/workflows/ci.yml/badge.svg)](https://github.com/yufen0922/verifigen/actions/workflows/ci.yml)
 
@@ -39,7 +39,8 @@ Repair 拿到同一份上下文和 Judge 问题，只修改错误内容，然后
 | 可观测性 | 保留原始模型判定、独立关卡报告，记录不含正文的配置与决策 Trace | [行为测试](tests/test_quality_controls.py) |
 
 阅读顺序：[架构与决策表](docs/architecture.md) → [接入新场景](docs/scenario_integration.md) →
-核心运行时 → 行为测试。`QualityLoop` 承担当前 Harness 的职责；导出的 `Harness` 类是 v0.1 兼容接口。
+[RAGTruth 评测协议](docs/ragtruth_evaluation.md) → 核心运行时 → 行为测试。`QualityLoop` 承担当前
+Harness 的职责；导出的 `Harness` 类是 v0.1 兼容接口。
 
 ## 现在使用的模型
 
@@ -93,6 +94,13 @@ thinking budget、样本分布和独立 oracle 一起解释，不能把离线回
 
 已公开的基线为 **180 条合成样本、513 次真实模型调用、73.46% 错误初稿修复成功率（119/162）**。
 这是 v0.2 的实验结果，不代表本次未发布的关卡和策略改动已取得同样效果。
+
+项目同时已使用 [RAGTruth](https://github.com/ParticleMedia/RAGTruth) 构建第一阶段 600 条公开评测集：
+QA、摘要、数据转文本各 200 条，每类包含 100 条有效幻觉样本和 100 条正常样本；开发集 180 条、
+评测集 420 条，并按 `source_id` 隔离原始材料。RAGTruth 官方语料包含 2,965 个原始材料、17,790 条
+模型回答和词级人工幻觉标注。当前已完成数据核验与固定抽样，尚未发布这 600 条上的 Qwen 完整运行
+和修复后盲审指标；上面的 73.46% 仅属于 180 条合成集。详见
+[RAGTruth 评测协议](docs/ragtruth_evaluation.md)。
 
 单场景 RAG 评测使用确定性生成的 60 条样本：
 
