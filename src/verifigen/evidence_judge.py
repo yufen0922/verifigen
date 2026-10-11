@@ -19,10 +19,10 @@ class _Assessment(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     criterion_id: str = Field(min_length=1)
-    statement: str = Field(min_length=1, max_length=400)
+    statement: str = Field(min_length=1, max_length=1200)
     status: Literal["pass", "fail", "unknown"]
-    evidence: str = Field(min_length=1, max_length=600)
-    suggestion: str = Field(default="", max_length=300)
+    evidence: str = Field(min_length=1, max_length=1600)
+    suggestion: str = Field(default="", max_length=800)
 
 
 class _EvidencePayload(BaseModel):

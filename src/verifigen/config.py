@@ -38,6 +38,7 @@ class ModelSettings:
         validate_judge_quotes: bool = False,
         judge_model: str | None = None,
         judge_strategy: Literal["verdict", "claims"] = "verdict",
+        max_output_tokens: int = 4096,
     ) -> Qwen3Stack:
         if not self.api_key:
             raise ValueError("Set DASHSCOPE_API_KEY or configure the ignored .env.local file")
@@ -50,4 +51,5 @@ class ModelSettings:
             validate_judge_quotes=validate_judge_quotes,
             judge_model=judge_model,
             judge_strategy=judge_strategy,
+            max_output_tokens=max_output_tokens,
         )

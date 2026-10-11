@@ -48,6 +48,7 @@ async def evaluate(args: argparse.Namespace) -> dict[str, Any]:
         validate_judge_quotes=args.validate_judge_quotes,
         judge_model=args.judge_model,
         judge_strategy=args.judge_strategy,
+        max_output_tokens=args.max_output_tokens,
     )
     reviewer = CompatibleChatGenerator(
         base_url=settings.base_url,
@@ -102,7 +103,8 @@ async def evaluate(args: argparse.Namespace) -> dict[str, Any]:
         "refinement_mode": args.refinement_mode,
         "check_fulfillment": args.check_fulfillment,
         "temperature": 0,
-        "max_output_tokens": 4096,
+        "max_output_tokens": args.max_output_tokens,
+        "reviewer_max_output_tokens": 4096,
         "budget_ceiling": asdict(budget),
         "arms": list(arms),
         "split": args.split,
@@ -224,12 +226,15 @@ def main() -> None:
     parser.add_argument("--enable-thinking", action="store_true")
     parser.add_argument("--validate-judge-quotes", action="store_true")
     parser.add_argument("--judge-model")
+    parser.add_argument("--max-output-tokens", type=int, default=4096)
     parser.add_argument("--judge-strategy", choices=("verdict", "claims"), default="verdict")
     parser.add_argument("--refinement-mode", choices=("edit", "source_first"), default="edit")
     parser.add_argument("--check-fulfillment", action="store_true")
     args = parser.parse_args()
     if not 1 <= args.concurrency <= 16 or args.thinking_budget < 1:
         parser.error("Use concurrency 1..16 and a positive thinking budget")
+    if not 512 <= args.max_output_tokens <= 16384:
+        parser.error("Use max-output-tokens 512..16384")
     try:
         asyncio.run(evaluate(args))
     except (ValueError, OSError) as exc:

@@ -103,7 +103,7 @@ async def test_empty_claims_are_repairable_for_failed_task_but_never_allow_publi
     for criterion, expected in (("fail", "fail"), ("unknown", "unknown"), ("pass", None)):
         judge = EvidenceJudge(
             FunctionGenerator(
-                lambda request: {
+                lambda request, criterion=criterion: {
                     "claims": [],
                     "criteria": [check(criterion)],
                 }
