@@ -64,7 +64,7 @@ async def evaluate(args: argparse.Namespace) -> dict[str, Any]:
         max_observed_tokens=24000,
     )
     excluded_sources = (
-        sorted({r["source_id"] for r in read_jsonl(args.exclude_records)})
+        sorted({r["source_id"] for path in args.exclude_records for r in read_jsonl(path)})
         if args.exclude_records
         else []
     )
@@ -219,7 +219,7 @@ def main() -> None:
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--resume", action="store_true")
     parser.add_argument("--split", choices=("dev", "eval"), default="eval")
-    parser.add_argument("--exclude-records", type=Path)
+    parser.add_argument("--exclude-records", type=Path, nargs="+")
     parser.add_argument("--optimized", action="store_true")
     parser.add_argument("--judge-history", choices=("full", "none"), default="full")
     parser.add_argument("--max-protocol-retries", type=int, choices=(0, 1), default=1)
