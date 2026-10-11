@@ -24,6 +24,7 @@ from verifigen.comparison import (
 )
 from verifigen.config import ModelSettings
 from verifigen.generators import CompatibleChatGenerator
+from verifigen.preflight import account_blocked, probe_models
 from verifigen.ragtruth import read_jsonl
 from verifigen.review import QualityBudget
 
@@ -86,6 +87,7 @@ async def evaluate(args: argparse.Namespace) -> dict[str, Any]:
         "ragtruth.py",
         "config.py",
         "evidence_judge.py",
+        "preflight.py",
     )
     config = {
         "protocol": PROTOCOL,
@@ -115,6 +117,7 @@ async def evaluate(args: argparse.Namespace) -> dict[str, Any]:
         "refine_verify_initial_edits": 1 if args.optimized else 0,
         "self_refine_rounds": 2,
         "concurrency": args.concurrency,
+        "preflight_output_tokens": 64,
         "prompt_hashes": {
             "self_refine": hashlib.sha256(SELF_REFINE_INSTRUCTIONS.encode()).hexdigest(),
             "review": hashlib.sha256(REVIEW_INSTRUCTIONS.encode()).hexdigest(),
@@ -139,10 +142,46 @@ async def evaluate(args: argparse.Namespace) -> dict[str, Any]:
     if len(completed) != len(records) or not completed.issubset(expected):
         raise ValueError("Duplicate or unexpected arm records")
     semaphore = asyncio.Semaphore(args.concurrency)
+    blocked = asyncio.Event()
+    if completed != expected:
+        aliases = sorted({settings.model, stack.judge.generator.model, args.reviewer_model})
+    else:
+        packets, _mapping = blind_packets(samples, records)
+        reviewed_ids = (
+            {r["review_id"] for r in read_jsonl(args.output / "reviews.jsonl")}
+            if (args.output / "reviews.jsonl").exists()
+            else set()
+        )
+        aliases = (
+            [args.reviewer_model]
+            if any(p["review_id"] not in reviewed_ids for p in packets)
+            else []
+        )
+    probes = await probe_models(
+        {
+            model: CompatibleChatGenerator(
+                base_url=settings.base_url,
+                api_key=settings.api_key,
+                model=model,
+                timeout=15,
+                max_output_tokens=64,
+                extra_body={} if model == args.reviewer_model else {"enable_thinking": False},
+            )
+            for model in aliases
+        }
+    )
+    for probe in probes:
+        with (args.output / "provider-probes.jsonl").open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps(probe) + "\n")
+    if any(not p["ready"] for p in probes):
+        failure = probes[-1]["failure"]
+        raise ValueError(f"Provider preflight failed: {failure}; no evaluation batch started")
 
-    async def one(sample: dict[str, Any], arm: str) -> dict[str, Any]:
+    async def one(sample: dict[str, Any], arm: str) -> dict[str, Any] | None:
         async with semaphore:
-            return await run_arm(
+            if blocked.is_set():
+                return None
+            row = await run_arm(
                 sample,
                 arm,
                 stack,
@@ -152,11 +191,16 @@ async def evaluate(args: argparse.Namespace) -> dict[str, Any]:
                 refinement_mode=args.refinement_mode,
                 check_fulfillment=args.check_fulfillment,
             )
+            if account_blocked(row):
+                blocked.set()
+            return row
 
     async def collect(tasks: list[asyncio.Task[Any]], path: Path, rows: list[Any]) -> None:
         try:
             for future in asyncio.as_completed(tasks):
                 row = await future
+                if row is None:
+                    continue
                 with path.open("a", encoding="utf-8") as handle:
                     handle.write(json.dumps(row, ensure_ascii=False) + "\n")
                     handle.flush()
@@ -179,6 +223,10 @@ async def evaluate(args: argparse.Namespace) -> dict[str, Any]:
         records_path,
         records,
     )
+    if blocked.is_set():
+        raise ValueError(
+            "Provider account unavailable; completed/in-flight attempts retained, queued work stopped"
+        )
     packets, mapping = blind_packets(samples, records)
     for name, rows in (("blind-packets.jsonl", packets), ("review-mapping.jsonl", mapping)):
         (args.output / name).write_text(
@@ -192,15 +240,24 @@ async def evaluate(args: argparse.Namespace) -> dict[str, Any]:
     ):
         raise ValueError("Duplicate or unexpected review records")
 
-    async def external(packet: dict[str, Any]) -> dict[str, Any]:
+    async def external(packet: dict[str, Any]) -> dict[str, Any] | None:
         async with semaphore:
-            return await review_packet(packet, reviewer)
+            if blocked.is_set():
+                return None
+            row = await review_packet(packet, reviewer)
+            if account_blocked(row):
+                blocked.set()
+            return row
 
     await collect(
         [asyncio.create_task(external(p)) for p in packets if p["review_id"] not in reviewed_ids],
         review_path,
         reviews,
     )
+    if blocked.is_set():
+        raise ValueError(
+            "Reviewer account unavailable; completed/in-flight attempts retained, queued work stopped"
+        )
     summary = {"config": config, **summarize(records, mapping, reviews)}
     write_json(args.output / "summary.json", summary)
     print(json.dumps(summary["arms"], indent=2), flush=True)

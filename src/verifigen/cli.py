@@ -67,8 +67,12 @@ async def execute(args: argparse.Namespace) -> int:
                     total_tokens=generation.usage.total_tokens,
                     valid_response=generation.content == {"answer": "799"},
                 )
-            except Exception:
+            except Exception as exc:
                 diagnostics.update(live_checked=True, error="provider_or_configuration_error")
+                from .generators import ProviderError
+
+                if isinstance(exc, ProviderError):
+                    diagnostics["provider_error"] = exc.diagnostics()
                 print(json.dumps(diagnostics, ensure_ascii=False, indent=2))
                 return 2
         print(json.dumps(diagnostics, ensure_ascii=False, indent=2))

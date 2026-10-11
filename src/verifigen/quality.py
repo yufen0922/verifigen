@@ -237,7 +237,15 @@ class QualityLoop:
                         else "component_error"
                     )
                     emit(
-                        "call_failed", role=role, category=category, total_tokens=usage.total_tokens
+                        "call_failed",
+                        role=role,
+                        category=category,
+                        total_tokens=usage.total_tokens,
+                        **(
+                            {"http_status": exc.http_status, "provider_code": exc.provider_code}
+                            if isinstance(exc, ProviderError)
+                            else {}
+                        ),
                     )
                     # Only protocol failures with known billing can be retried safely. No
                     # retries of business FAIL/UNKNOWN, HTTP failures or unknown usage.

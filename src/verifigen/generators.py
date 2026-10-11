@@ -20,7 +20,13 @@ class ProviderError(RuntimeError):
     """Redacted provider failure; the HTTP body and credential are never included."""
 
     def __init__(
-        self, message: str, *, category: str = "provider_error", usage: Usage | None = None
+        self,
+        message: str,
+        *,
+        category: str = "provider_error",
+        usage: Usage | None = None,
+        http_status: int | None = None,
+        provider_code: str | None = None,
     ) -> None:
         super().__init__(message)
         self.category = (
@@ -36,6 +42,36 @@ class ProviderError(RuntimeError):
             else "provider_error"
         )
         self.usage = usage or Usage()
+        self.http_status = (
+            http_status if type(http_status) is int and 400 <= http_status <= 599 else None
+        )
+        self.provider_code = (
+            provider_code
+            if isinstance(provider_code, str)
+            and provider_code
+            in {
+                "Arrearage",
+                "insufficient_quota",
+                "InvalidApiKey",
+                "invalid_api_key",
+                "Throttling.RateQuota",
+                "Throttling.AllocationQuota",
+                "Throttling",
+                "AccessDenied",
+                "InvalidParameter",
+                "data_inspection_failed",
+                "FreeTierOnly",
+                "QuotaExhausted",
+            }
+            else None
+        )
+
+    def diagnostics(self) -> dict[str, Any]:
+        return {
+            "category": self.category,
+            "http_status": self.http_status,
+            "provider_code": self.provider_code,
+        }
 
 
 class ReplayGenerator:
@@ -209,10 +245,19 @@ class CompatibleChatGenerator:
             raise ProviderError(
                 "Provider request failed; inspect provider-side logs privately", category="timeout"
             ) from None
-        except httpx.HTTPStatusError:
+        except httpx.HTTPStatusError as exc:
+            code = None
+            try:
+                error = exc.response.json().get("error", {})
+                if isinstance(error, dict):
+                    code = error.get("code")
+            except (ValueError, AttributeError):
+                pass
             raise ProviderError(
                 "Provider request failed; inspect provider-side logs privately",
                 category="http_error",
+                http_status=exc.response.status_code,
+                provider_code=code if isinstance(code, str) else None,
             ) from None
         except Exception:
             raise ProviderError(

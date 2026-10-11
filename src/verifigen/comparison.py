@@ -180,6 +180,8 @@ async def run_arm(
                         raise
                     except Exception as exc:
                         usages.append(exc.usage if isinstance(exc, ProviderError) else Usage())
+                        if isinstance(exc, ProviderError):
+                            data.setdefault("provider_failures", []).append(exc.diagnostics())
                         raise RuntimeError("provider_error") from None
                     usages.append(generation.usage)
                     proposed = generation.content
@@ -252,6 +254,7 @@ async def review_packet(packet: dict[str, Any], generator: Generator) -> dict[st
     started = time.monotonic()
     usage = Usage()
     status, review = "error", None
+    failure = None
     try:
         generation = await generator.generate(
             GenerationRequest(
@@ -269,6 +272,9 @@ async def review_packet(packet: dict[str, Any], generator: Generator) -> dict[st
         status = "reviewed"
     except asyncio.CancelledError:
         raise
+    except ProviderError as exc:
+        usage = exc.usage
+        failure = exc.diagnostics()
     except Exception:
         pass
     return {
@@ -279,6 +285,7 @@ async def review_packet(packet: dict[str, Any], generator: Generator) -> dict[st
         "model_calls": 1,
         "usage": asdict(usage),
         "latency_seconds": time.monotonic() - started,
+        "provider_error": failure,
     }
 
 
