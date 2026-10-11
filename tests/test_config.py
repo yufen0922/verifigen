@@ -34,6 +34,16 @@ def test_current_stack_defaults_to_json_compatible_mode_and_supports_role_choice
     assert thinking.generator.extra_body == {"enable_thinking": True, "thinking_budget": 1024}
 
 
+def test_structured_output_capacity_is_forwarded_to_each_runtime_role():
+    stack = ModelSettings(api_key="test-secret").stack(
+        judge_strategy="claims",
+        max_output_tokens=8192,
+    )
+    assert stack.generator.max_output_tokens == 8192
+    assert stack.judge.generator.max_output_tokens == 8192
+    assert stack.repairer.generator.max_output_tokens == 8192
+
+
 def test_doctor_reports_configuration_without_credentials(tmp_path):
     env_file = tmp_path / "local.env"
     env_file.write_text("DASHSCOPE_API_KEY=private-fixture\nDASHSCOPE_MODEL=test-model\n")

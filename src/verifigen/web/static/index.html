@@ -206,6 +206,16 @@
                   <option value="verdict">整体判定</option>
                   <option value="claims">逐项事实（实验）</option>
                 </select></label>
+                <label>运行模型<select id="runtime-model">
+                  <option value="configured">当前配置</option>
+                  <option value="qwen3.5-flash">Qwen3.5-Flash</option>
+                  <option value="qwen3.5-plus">Qwen3.5-Plus</option>
+                </select></label>
+                <label>单次输出上限<select id="output-capacity">
+                  <option value="4096">4096 tokens</option>
+                  <option value="8192">8192 tokens</option>
+                  <option value="16384">16384 tokens</option>
+                </select></label>
                 <label>初始修订<select id="refinement-mode">
                   <option value="edit">修订初稿</option>
                   <option value="source_first">原材料优先（实验）</option>

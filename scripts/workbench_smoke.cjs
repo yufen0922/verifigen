@@ -55,7 +55,18 @@ const fs = require("node:fs");
     await page.locator("#run").click();
     assert.match(await page.locator("#notice").textContent(), /有效 JSON/);
     await page.locator("#reset").click();
-    if (process.argv.includes("--live")) {
+    if (process.argv.includes("--evidence-live")) {
+      await page.locator("#preset").selectOption("Data2txt");
+      await page.locator("#initial-refinement").check();
+      await page.locator("#refinement-mode").selectOption("source_first");
+      await page.locator("#judge-strategy").selectOption("claims");
+      await page.locator("#check-fulfillment").check();
+      if (process.argv.includes("--plus")) {
+        await page.locator("#runtime-model").selectOption("qwen3.5-plus");
+        await page.locator("#output-capacity").selectOption("8192");
+      }
+    }
+    if (process.argv.includes("--live") || process.argv.includes("--evidence-live")) {
       await page.locator("#run").click();
       await page.waitForFunction(
         () =>
@@ -70,6 +81,12 @@ const fs = require("node:fs");
       );
       assert.ok((await page.locator(".round").count()) > 0);
       assert.ok(Number(await page.locator("#call-count").textContent()) > 0);
+      if (process.argv.includes("--evidence-live")) {
+        assert.match(await page.locator("#round-list").textContent(), /事实与规则核查/);
+        if (process.argv.includes("--plus")) {
+          assert.equal(await page.locator("#model-label").textContent(), "qwen3.5-plus");
+        }
+      }
       await page.screenshot({
         path: "runs/screenshots/workbench-live.png",
         fullPage: true,
@@ -153,6 +170,11 @@ const fs = require("node:fs");
         assert.equal(await page.locator("#baseline-records tr").count(), experiment.summary.config.selected_case_ids.length);
         assert.match(await page.locator("#baseline-note").textContent(), /开发诊断/);
         assert.ok((await page.locator("#baseline-note").textContent()).includes(experiment.summary.config.judge_model || experiment.summary.config.model));
+        if (experiment.review_errors) {
+          assert.ok((await page.locator("#baseline-note").textContent()).includes(
+            `评审不可用 ${experiment.review_errors}/${experiment.review_attempts}`,
+          ));
+        }
       }
       await page.locator("#baseline-experiment").selectOption(comparisonData.default_id);
       await page.locator("#baseline-arm").selectOption("refine_verify");

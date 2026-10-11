@@ -149,6 +149,42 @@ def test_incompatible_judge_flags_fail_before_execution(client):
     assert response.status_code == 422
 
 
+def test_runtime_model_and_completion_capacity_are_explicit_saved_configuration(client):
+    response = client.post("/api/runs", json=payload(model="qwen3.5-plus", max_output_tokens=8192))
+    assert response.status_code == 202 and response.json()["model"] == "qwen3.5-plus"
+    stored = client.get(f"/api/runs/{response.json()['id']}").json()
+    assert stored["model"] == "qwen3.5-plus" and stored["input"]["max_output_tokens"] == 8192
+    assert client.post("/api/runs", json=payload(model="arbitrary-endpoint")).status_code == 422
+    assert client.post("/api/runs", json=payload(max_output_tokens=100000)).status_code == 422
+
+
+def test_selected_runtime_reaches_factory_without_changing_endpoint_or_credentials(
+    tmp_path, monkeypatch
+):
+    configured = ModelSettings(
+        api_key="PRIVATE_TEST_SECRET", model="qwen3.5-flash", base_url="https://example.test/v1"
+    )
+    calls = []
+
+    def build(settings, **options):
+        calls.append((settings, options))
+        return agents()
+
+    monkeypatch.setattr(ModelSettings, "stack", build)
+    with TestClient(create_app(settings=configured, run_dir=tmp_path)) as session:
+        response = session.post(
+            "/api/runs",
+            json=payload(model="qwen3.5-plus", max_output_tokens=8192, judge_strategy="claims"),
+        )
+        assert response.status_code == 202
+        record = session.get(f"/api/runs/{response.json()['id']}").json()
+    selected, options = calls[0]
+    assert selected.model == "qwen3.5-plus" and configured.model == "qwen3.5-flash"
+    assert selected.api_key == configured.api_key and selected.base_url == configured.base_url
+    assert options["max_output_tokens"] == 8192 and options["judge_strategy"] == "claims"
+    assert "PRIVATE_TEST_SECRET" not in json.dumps(record)
+
+
 def test_invalid_schema_fails_closed_before_judgment(client):
     identifier = client.post("/api/runs", json=payload(output_schema={"type": "invalid"})).json()[
         "id"

@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 
 from verifigen.comparison import OPTIMIZED_ARMS, blind_packets, select_cohort, summarize
-from verifigen.ragtruth import read_jsonl
+from verifigen.ragtruth import make_ragtruth_task, read_jsonl
 
 
 def main() -> None:
@@ -72,6 +72,29 @@ def main() -> None:
                     if not runtime.get("rounds"):
                         raise ValueError("Verified release has no final judgment")
                     final = runtime["rounds"][-1]
+                    assessments = final.get("assessments", [])
+                    if config.get("judge_strategy") == "claims":
+                        if (
+                            not assessments
+                            or not any(a["kind"] == "claim" for a in assessments)
+                            or any(a["status"] != "pass" for a in assessments)
+                        ):
+                            raise ValueError("Claim-assessed release contains unresolved checks")
+                        allowed = {c.id for c in make_ragtruth_task(sample).criteria}
+                        if config.get("check_fulfillment"):
+                            allowed.add("fulfillment")
+                        criteria = [
+                            a["criterion_id"] for a in assessments if a["kind"] == "criterion"
+                        ]
+                        if (
+                            len(criteria) != len(allowed)
+                            or set(criteria) != allowed
+                            or any(a["criterion_id"] not in allowed for a in assessments)
+                            or any(a["kind"] not in ("claim", "criterion") for a in assessments)
+                        ):
+                            raise ValueError(
+                                "Claim-assessed release has invalid criterion coverage"
+                            )
                     if (
                         final["candidate"] != record["output"]
                         or final["effective_verdict"]["status"] != "pass"

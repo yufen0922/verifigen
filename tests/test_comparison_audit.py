@@ -68,6 +68,11 @@ def test_audit_rejects_tampered_release_or_accounting(tmp_path, mutation):
         "ragtruth-json-dev-30",
         "ragtruth-optimized-eval-60",
         "ragtruth-plus-judge-dev-30",
+        "ragtruth-evidence-dev-30",
+        "ragtruth-source-first-dev-30",
+        "ragtruth-evidence-v2-dev-30",
+        "ragtruth-evidence-plus-dev-30",
+        "ragtruth-evidence-plus-restored-dev-30",
     ],
 )
 def test_published_comparison_passes_audit(experiment):
@@ -83,3 +88,43 @@ def test_published_comparison_passes_audit(experiment):
         text=True,
     )
     assert result.returncode == 0, result.stderr
+
+
+@pytest.mark.parametrize(
+    "mutation", ["unresolved", "missing_criterion", "unknown_criterion", "empty_claims"]
+)
+def test_audit_rejects_invalid_assessments_in_passing_release(tmp_path, mutation):
+    source = ROOT / "benchmarks/results/ragtruth-evidence-dev-30"
+    for name in (
+        "config.json",
+        "summary.json",
+        "review-mapping.jsonl",
+        "reviews.jsonl",
+        "blind-packets.jsonl",
+    ):
+        (tmp_path / name).write_bytes((source / name).read_bytes())
+    rows = [json.loads(line) for line in (source / "records.jsonl").read_text().splitlines()]
+    row = next(r for r in rows if r["arm"] == "refine_verify" and r["status"] == "passed")
+    final = row["runtime"]["rounds"][-1]
+    if mutation == "unresolved":
+        final["assessments"][0]["status"] = "unknown"
+    elif mutation == "missing_criterion":
+        final["assessments"] = [a for a in final["assessments"] if a["kind"] != "criterion"]
+    elif mutation == "unknown_criterion":
+        final["assessments"][0]["criterion_id"] = "invented"
+    else:
+        final["assessments"] = [a for a in final["assessments"] if a["kind"] != "claim"]
+    (tmp_path / "records.jsonl").write_text("".join(json.dumps(r) + "\n" for r in rows))
+    result = subprocess.run(
+        [sys.executable, str(ROOT / "scripts/audit_comparison.py"), "--results", str(tmp_path)],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 2
+    expected = (
+        "Claim-assessed release has invalid criterion coverage"
+        if mutation in ("missing_criterion", "unknown_criterion")
+        else "Claim-assessed release contains unresolved checks"
+    )
+    assert expected in result.stderr

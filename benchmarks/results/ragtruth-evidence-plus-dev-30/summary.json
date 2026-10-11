@@ -1,0 +1,248 @@
+{
+  "config": {
+    "protocol": "ragtruth-paired-v1",
+    "model": "qwen3.5-plus",
+    "reviewer_model": "qwen-plus",
+    "provider_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "provider_snapshot": "Alias; upstream exact weights/version may change.",
+    "samples_sha256": "1e702106e17142e25c034e7dc72d5bbcbe38e7ac6ae1a42297f7a20362624bcc",
+    "selected_case_ids": [
+      "76",
+      "849",
+      "1524",
+      "1541",
+      "3931",
+      "3987",
+      "4148",
+      "4986",
+      "5044",
+      "5613",
+      "5798",
+      "5839",
+      "6269",
+      "8820",
+      "9144",
+      "9512",
+      "9722",
+      "9754",
+      "9813",
+      "10171",
+      "12303",
+      "12409",
+      "12776",
+      "12837",
+      "12856",
+      "13396",
+      "13854",
+      "14561",
+      "16286",
+      "17298"
+    ],
+    "per_task": 10,
+    "thinking_budget": 1024,
+    "enable_thinking": false,
+    "judge_model": "qwen3.5-plus",
+    "judge_strategy": "claims",
+    "refinement_mode": "source_first",
+    "check_fulfillment": true,
+    "temperature": 0,
+    "max_output_tokens": 8192,
+    "reviewer_max_output_tokens": 4096,
+    "budget_ceiling": {
+      "max_model_calls": 5,
+      "max_repair_rounds": 2,
+      "deadline_seconds": 120,
+      "min_pass_score": 0.8,
+      "max_observed_tokens": 24000
+    },
+    "arms": [
+      "direct",
+      "judge_only",
+      "self_refine",
+      "quality_loop",
+      "refine_verify"
+    ],
+    "split": "dev",
+    "excluded_sources": [],
+    "judge_history": "none",
+    "max_protocol_retries": 1,
+    "validate_judge_quotes": false,
+    "refine_verify_initial_edits": 1,
+    "self_refine_rounds": 2,
+    "concurrency": 6,
+    "prompt_hashes": {
+      "self_refine": "24f4e9944b301339e513dc8a66fc2df2f6fa3edb21e69cac80c1811eed5df486",
+      "review": "879fedb0832c2b0862f4c0503fc19f5bbe36434f2720f613550a4ba670405c75"
+    },
+    "runtime_sha256": {
+      "comparison.py": "93c2900f7d10602ac72172d2574599ffe9f1261031467b608b426c3745f11623",
+      "agents.py": "77de1fb3598f6997b7c0d440652740c0999ee180ebf0f0eb4d78db2036913ad3",
+      "generators.py": "ad16d4c5fab5339556af4e0dd752dd364e1bc278a65f728e6252c4e59f62b190",
+      "quality.py": "9cdccc6e6851b6068d36241bbb7695aa1e602933ea1d11b8b7903fe830e4cd15",
+      "review.py": "a7c13e2643edb3afefcb37d69f29cbcbe7b5704542a926d6628ab100a4b40811",
+      "policy.py": "d6ed01ab80223ee898a82c8b037ee67bd66652be70b5f87a63230e8300d4d01f",
+      "gates.py": "ac1bdabfd92512cbfb00845fce6acc84e3cde96e099847dd4c1f0a1d02b9b25f",
+      "ragtruth.py": "77e160ce91948979be66c641781e5b44975a773cec9a608119d74d5b39832f43",
+      "config.py": "1bf69e8fb4829ac47bf9434bab105a4048c3f142575bfa43ee52b45027671fbd",
+      "evidence_judge.py": "8afca1a1b3bac0e55a2bff310eddd5e216b421930e6790b1be72ea5a0aa06666"
+    },
+    "runner_sha256": "ca781109a865badc89708f0d8f2540492f130baf2d2a47e589b811475618595c"
+  },
+  "protocol": "ragtruth-paired-v1",
+  "label_kind": "cross_model_automatic_proxy_not_human_ground_truth",
+  "arms": {
+    "direct": {
+      "cases": 30,
+      "released": 30,
+      "release_coverage": 1.0,
+      "proxy_reviewed": 5,
+      "unreviewed_releases": 25,
+      "proxy_grounded_releases": 3,
+      "proxy_grounding_failures": 2,
+      "proxy_usable_releases": 3,
+      "proxy_verified_yield": 0.1,
+      "proxy_grounded_release_rate": 0.1,
+      "proxy_bad_initial_rescue_count": 0,
+      "proxy_bad_initial_rescue_rate": 0.0,
+      "proxy_clean_changed_grounding_regressions": 0,
+      "clean_changed_releases": 0,
+      "fallback_reasons": {},
+      "model_calls": 0,
+      "known_tokens_lower_bound": 0,
+      "unknown_usage_calls": 0,
+      "latency_seconds": {
+        "mean": 1.6283321504791577e-05,
+        "p95": 2.4250010028481483e-05,
+        "excludes_queue": true
+      }
+    },
+    "judge_only": {
+      "cases": 30,
+      "released": 7,
+      "release_coverage": 0.23333333333333334,
+      "proxy_reviewed": 2,
+      "unreviewed_releases": 5,
+      "proxy_grounded_releases": 2,
+      "proxy_grounding_failures": 0,
+      "proxy_usable_releases": 2,
+      "proxy_verified_yield": 0.06666666666666667,
+      "proxy_grounded_release_rate": 0.2857142857142857,
+      "proxy_bad_initial_rescue_count": 0,
+      "proxy_bad_initial_rescue_rate": 0.0,
+      "proxy_clean_changed_grounding_regressions": 0,
+      "clean_changed_releases": 0,
+      "fallback_reasons": {
+        "repair_budget": 20,
+        "judge_error": 3
+      },
+      "model_calls": 30,
+      "known_tokens_lower_bound": 90547,
+      "unknown_usage_calls": 3,
+      "latency_seconds": {
+        "mean": 15.414133745808309,
+        "p95": 22.533713167067617,
+        "excludes_queue": true
+      }
+    },
+    "self_refine": {
+      "cases": 30,
+      "released": 26,
+      "release_coverage": 0.8666666666666667,
+      "proxy_reviewed": 3,
+      "unreviewed_releases": 23,
+      "proxy_grounded_releases": 2,
+      "proxy_grounding_failures": 1,
+      "proxy_usable_releases": 2,
+      "proxy_verified_yield": 0.06666666666666667,
+      "proxy_grounded_release_rate": 0.07692307692307693,
+      "proxy_bad_initial_rescue_count": 1,
+      "proxy_bad_initial_rescue_rate": 0.06666666666666667,
+      "proxy_clean_changed_grounding_regressions": 1,
+      "clean_changed_releases": 11,
+      "fallback_reasons": {
+        "provider_error": 4
+      },
+      "model_calls": 57,
+      "known_tokens_lower_bound": 96512,
+      "unknown_usage_calls": 4,
+      "latency_seconds": {
+        "mean": 7.701413287509543,
+        "p95": 12.031466999906115,
+        "excludes_queue": true
+      }
+    },
+    "quality_loop": {
+      "cases": 30,
+      "released": 23,
+      "release_coverage": 0.7666666666666667,
+      "proxy_reviewed": 1,
+      "unreviewed_releases": 22,
+      "proxy_grounded_releases": 1,
+      "proxy_grounding_failures": 0,
+      "proxy_usable_releases": 1,
+      "proxy_verified_yield": 0.03333333333333333,
+      "proxy_grounded_release_rate": 0.043478260869565216,
+      "proxy_bad_initial_rescue_count": 0,
+      "proxy_bad_initial_rescue_rate": 0.0,
+      "proxy_clean_changed_grounding_regressions": 0,
+      "clean_changed_releases": 4,
+      "fallback_reasons": {
+        "repair_budget": 1,
+        "judge_error": 5,
+        "repair_error": 1
+      },
+      "model_calls": 69,
+      "known_tokens_lower_bound": 202892,
+      "unknown_usage_calls": 6,
+      "latency_seconds": {
+        "mean": 28.37928158189558,
+        "p95": 48.47749858291354,
+        "excludes_queue": true
+      }
+    },
+    "refine_verify": {
+      "cases": 30,
+      "released": 25,
+      "release_coverage": 0.8333333333333334,
+      "proxy_reviewed": 3,
+      "unreviewed_releases": 22,
+      "proxy_grounded_releases": 2,
+      "proxy_grounding_failures": 1,
+      "proxy_usable_releases": 2,
+      "proxy_verified_yield": 0.06666666666666667,
+      "proxy_grounded_release_rate": 0.08,
+      "proxy_bad_initial_rescue_count": 2,
+      "proxy_bad_initial_rescue_rate": 0.13333333333333333,
+      "proxy_clean_changed_grounding_regressions": 0,
+      "clean_changed_releases": 10,
+      "fallback_reasons": {
+        "repair_budget": 1,
+        "refine_error": 4
+      },
+      "model_calls": 68,
+      "known_tokens_lower_bound": 180513,
+      "unknown_usage_calls": 4,
+      "latency_seconds": {
+        "mean": 24.768465551400247,
+        "p95": 53.72948862495832,
+        "excludes_queue": true
+      }
+    }
+  },
+  "reviewer_original_label_agreement": {
+    "cases": 30,
+    "matches": 3,
+    "all_case_agreement": 0.1,
+    "errors": 25,
+    "unknown": 0
+  },
+  "review_calls": 97,
+  "human_review_status": "pending",
+  "limitations": [
+    "Equal budget ceilings do not mean equal actual token/call consumption.",
+    "Automatic reviewer may be wrong and may share biases with the runtime model.",
+    "Balanced cohort prevalence and small pilot do not represent production traffic.",
+    "Original human labels validate original outputs, not rewritten candidates.",
+    "No production accuracy or human-confirmed repair success is claimed."
+  ]
+}

@@ -249,7 +249,8 @@ function event(event) {
         "span",
         `${time == null ? "—" : (time / 1000).toFixed(2) + "s"}  ${name}`,
       ),
-      node("span", [detail.role, detail.category, detail.action || detail.reason].filter(Boolean).join(" · ")),
+      node("span", [detail.role, detail.category, detail.http_status, detail.provider_code,
+        detail.action || detail.reason].filter(Boolean).join(" · ")),
     );
     $("event-log").append(line);
   }
@@ -329,6 +330,8 @@ async function start() {
       judge_strategy: $("judge-strategy").value,
       refinement_mode: $("refinement-mode").value,
       check_fulfillment: $("check-fulfillment").checked,
+      model: $("runtime-model").value,
+      max_output_tokens: Number($("output-capacity").value),
     };
     clearRun();
     $("token-count").dataset.total = "0";
@@ -340,6 +343,7 @@ async function start() {
       body: JSON.stringify(payload),
     });
     runId = response.id;
+    $("model-label").textContent = response.model;
     stream = new EventSource(response.events_url);
     stream.onmessage = (message) => {
       try {
@@ -434,12 +438,15 @@ function baselines() {
   $("baseline-arm").replaceChildren();
   for (const arm of Object.keys(summary.arms)) $("baseline-arm").add(new Option(labels[arm], arm));
   $("baseline-arm").value = previousArm in summary.arms ? previousArm : "quality_loop";
-  $("baseline-note").textContent =
+  const reviewWarning = experiment.review_errors
+    ? `评审不可用 ${experiment.review_errors}/${experiment.review_attempts} 次；缺失结果不能解释为语义错误。` : "";
+  $("baseline-note").textContent = reviewWarning +
     `${config.selected_case_ids.length} 条均衡抽样 · ${config.split === "dev" ? "开发诊断" : "评测"} · ` +
     `生成/修复 ${config.model} · Judge ${config.judge_model || config.model} · 评审 ${config.reviewer_model} · ` +
     `模式 ${config.enable_thinking === false ? "非思考" : "思考"} · ` +
     `Judge 策略 ${config.judge_strategy === "claims" ? "逐项事实" : "整体判定"} · ` +
     `任务完成度 ${config.check_fulfillment ? "开启" : "关闭"} · ` +
+    `单次输出上限 ${config.max_output_tokens} tokens · ` +
     `原稿人工标签一致率 ${percent(summary.reviewer_original_label_agreement.all_case_agreement)} · ` +
     "预算上限相同，实际消耗不同；自动评审为代理指标，人工双人盲审待完成。不同实验样本不同，不可直接相减。";
   for (const [arm, m] of Object.entries(summary.arms)) {
@@ -495,6 +502,9 @@ async function openRun(id) {
     $("judge-strategy").value = stored.input.judge_strategy || "verdict";
     $("refinement-mode").value = stored.input.refinement_mode || "edit";
     $("check-fulfillment").checked = stored.input.check_fulfillment || false;
+    $("runtime-model").value = stored.input.model || "configured";
+    $("output-capacity").value = String(stored.input.max_output_tokens || 4096);
+    $("model-label").textContent = stored.model;
     $("initial").disabled = stored.input.generate;
     runId = id;
     record = stored;

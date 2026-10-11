@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- Add an opt-in claim/criterion Judge with code-aggregated verdicts, auditable per-round
+  assessments and distinct repairable-claim versus task-level uncertainty handling.
+- Add source-first preliminary revision, explicit fulfillment checks, configurable completion
+  capacity and union-of-pilot source exclusions. Keep ordinary baseline/review prompts unchanged.
+- Probe provider availability before batches and stop queued work on account failures without
+  dropping in-flight records; expose allowlisted HTTP diagnostics without raw error bodies.
+- Let local workbench jobs select an allowlisted runtime model/output capacity and inspect claim
+  assessments; flag unavailable reviews rather than treating outages as semantic performance.
+
 - Add charged evidence-first refinement, separate Judge model configuration and corrective,
   budgeted protocol retries; retain known failed-call usage and explicit provider categories.
 - Use non-thinking JSON mode in configured live examples/workbench; keep thinking opt-in and

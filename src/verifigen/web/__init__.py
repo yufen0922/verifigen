@@ -10,6 +10,7 @@ import re
 import uuid
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from dataclasses import replace
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal
@@ -69,6 +70,8 @@ class RunInput(BaseModel):
     judge_strategy: Literal["verdict", "claims"] = "verdict"
     refinement_mode: Literal["edit", "source_first"] = "edit"
     check_fulfillment: bool = False
+    model: Literal["configured", "qwen3.5-flash", "qwen3.5-plus"] = "configured"
+    max_output_tokens: int = Field(default=4096, ge=512, le=16384, strict=True)
 
     def task(self) -> QualityTask:
         if self.judge_strategy == "claims" and self.validate_judge_quotes:
@@ -291,10 +294,19 @@ def create_app(
             raise HTTPException(413, "Request exceeds 512 KB")
         try:
             task = payload.task()
-            agents = stack or configured.stack(
+            runtime_settings = (
+                configured
+                if payload.model == "configured"
+                else replace(
+                    configured,
+                    model=payload.model,
+                )
+            )
+            agents = stack or runtime_settings.stack(
                 enable_thinking=payload.enable_thinking,
                 validate_judge_quotes=payload.validate_judge_quotes,
                 judge_strategy=payload.judge_strategy,
+                max_output_tokens=payload.max_output_tokens,
             )
         except ValueError as exc:
             raise HTTPException(422, str(exc)) from None
@@ -304,10 +316,10 @@ def create_app(
             )
             if oldest:
                 del jobs[oldest]
-        job = Job(payload, configured.model)
+        job = Job(payload, runtime_settings.model)
         jobs[job.id] = job
         job.future = asyncio.create_task(execute(job, payload, task, agents))
-        return {"id": job.id, "events_url": f"/api/runs/{job.id}/events"}
+        return {"id": job.id, "events_url": f"/api/runs/{job.id}/events", "model": job.model}
 
     @app.get("/api/runs/{identifier}")
     async def result(identifier: str) -> dict[str, Any]:

@@ -69,6 +69,33 @@ configuration. `--judge-model MODEL` permits a separately configured Judge; the 
 differ from both runtime model aliases. Changing models changes the system and its cost, not just
 the loop. Never attribute a combined profile's result to one switch without an ablation.
 
+`--judge-strategy claims` is an opt-in experimental assessment protocol. Each fact and criterion
+has its own result; code aggregates the overall verdict and saves every check in the runtime rounds.
+An unresolved claim requires repair; an unavailable task-level criterion still forces fallback.
+Every check must pass before release. Empty claim tables cannot produce a passing result. This
+enforces internal aggregation consistency, not complete factual coverage or correct entailment.
+`--refinement-mode source_first` changes only the hybrid's optional preliminary edit.
+`--check-fulfillment` explicitly adds task fulfillment to Judge criteria, without changing the
+ordinary baseline or external review prompts. Its overall verdict must not be scored directly
+as a pure hallucination classifier using original RAGTruth grounding labels. All switches are
+frozen in the experiment configuration; none is promoted to default solely from repeated dev trials.
+
+`--exclude-records` accepts multiple completed record files and excludes the union of their source
+groups. For any follow-up validation after the two 60-case pilots, supply both record files rather
+than excluding only response IDs. `--max-output-tokens` sets and freezes the same completion ceiling
+for all runtime roles, including ordinary self-refinement; evaluator capacity is recorded separately.
+Changing the runtime model or completion ceiling changes capacity/cost, not just orchestration.
+
+Before pending work, the runner sends one tiny JSON availability probe per required model alias.
+Probe attempts and known usage are recorded separately in `provider-probes.jsonl`, not charged to
+any arm. A failed probe prevents starting the batch. During runtime or review, an account-blocking
+provider error stops queued work; already-started requests finish and their records remain. Temporary
+rate limits do not trigger this account guard. Errors retain only allowlisted provider metadata, never
+raw response bodies or credentials. An interrupted batch does not publish a complete summary.
+`--resume` retains failed completed attempts as failures and requires the exact frozen code/config;
+it is not a selective retry mechanism. For a fresh comparison after an outage, use a new directory
+and rerun every baseline and review, preserving the interrupted directory.
+
 Review packets contain only the original task, evidence and one candidate. They omit the arm,
 original hallucination label, span annotations, runtime verdict, score and repair history.
 Identical outputs within one case are deduplicated so they receive the same review.

@@ -125,7 +125,13 @@ def main() -> None:
         ("ragtruth-quoted-dev-30", "引用契约开发诊断 · 30 条"),
         ("ragtruth-json-dev-30", "非思考模式开发诊断 · 30 条"),
         ("ragtruth-plus-judge-dev-30", "独立 Judge 开发诊断 · 30 条"),
+        ("ragtruth-evidence-dev-30", "逐项判定初版开发诊断 · 30 条"),
+        ("ragtruth-source-first-dev-30", "原材料优先开发诊断 · 30 条"),
+        ("ragtruth-evidence-v2-dev-30", "逐项判定修正版开发诊断 · 30 条"),
+        ("ragtruth-evidence-plus-dev-30", "Plus 逐项判定开发诊断 · 30 条"),
+        ("ragtruth-evidence-plus-restored-dev-30", "Plus 完整重跑开发诊断 · 30 条"),
         ("ragtruth-optimized-eval-60", "优化版对照 · 60 条"),
+        ("ragtruth-evidence-plus-eval-60", "Plus 逐项判定对照 · 60 条"),
     ):
         comparison = ROOT / "benchmarks/results" / identifier
         if not (comparison / "summary.json").exists():
@@ -135,10 +141,13 @@ def main() -> None:
             for r in read_jsonl(comparison / "review-mapping.jsonl")
         }
         reviews = {r["review_id"]: r for r in read_jsonl(comparison / "reviews.jsonl")}
+        review_errors = sum(r.get("review") is None for r in reviews.values())
         experiment = {
             "id": identifier,
             "label": label,
             "status": "completed",
+            "review_errors": review_errors,
+            "review_attempts": len(reviews),
             "summary": json.loads((comparison / "summary.json").read_text()),
             "records": [
                 {**r, "external_review": reviews.get(mapping.get((r["id"], r["arm"])))}

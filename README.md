@@ -163,6 +163,15 @@ superiority in development. Non-thinking JSON, known failed-call accounting and 
 retries improve the engineering contract, not proven semantic accuracy. All configurations and
 unfavorable results are inspectable in the workbench; human post-repair review is still pending.
 
+The optional [claim-level protocol](docs/architecture.md) records individual facts and criteria,
+aggregates the verdict in code, and supports source-first preliminary revision and explicit task
+fulfillment checks. It prevents inconsistent aggregation, not incorrect model reasoning. The
+[complete Plus development rerun](benchmarks/results/ragtruth-evidence-plus-restored-dev-30/report.md)
+has a one-case hybrid lead (26/30 versus self-refinement's 25/30), with higher token use and latency;
+this repeated development result is not a validated improvement. The provider-unavailable attempt
+is retained and clearly marked inconclusive. Batch probes and queue guards prevent continuing queued
+requests after account failures. The workbench can select runtime models/capacity and inspect checks.
+
 ## Evaluation
 
 The single-scenario RAG suite has 60 deterministically generated cases:

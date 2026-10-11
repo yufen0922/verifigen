@@ -30,7 +30,8 @@ The default stays disabled so callers can choose whether to rewrite an apparentl
 `max_protocol_retries=1` permits one retry per Judge/Repair operation after an invalid structured
 response with known usage. Every attempt counts against calls, tokens and the original deadline.
 Semantic FAIL/UNKNOWN, HTTP errors, incomplete completions and unknown billing are not retried.
-Set it to zero to disable. Error traces contain a redacted category and usage, never raw responses.
+Set it to zero to disable. Error traces contain a redacted category, known usage, HTTP status and
+allowlisted provider code when available, never raw responses or credentials.
 Retries explicitly tell Judge/Repair that the previous attempt failed protocol validation;
 they do not include the invalid raw response or change the original candidate/evidence.
 
@@ -40,6 +41,27 @@ each failure must quote an actual candidate fragment, and non-empty source quote
 the source snapshot (whitespace normalized). An unsupported claim may have no source quotation.
 Quote presence is not proof of entailment or complete claim coverage. The strict protocol is off
 by default because its development experiment increased fallback and token use.
+
+The experimental `judge_strategy=claims` requests per-claim and per-criterion assessments rather
+than an independent top-level vote. The runtime aggregates them and preserves every assessment
+in `rounds[].assessments`. An unresolved claim is repair feedback, not a verified fact; a criterion
+UNKNOWN (task-level unavailable evidence) still stops the loop. A release requires all assessed
+claims and criteria PASS and all hard gates PASS. Empty claim lists cannot publish. Aggregation
+consistency does not establish full claim coverage or correct model judgments. Literal quotation
+validation is incompatible with this strategy and returns 422 rather than silently ignoring it.
+
+`refinement_mode=source_first` changes the optional preliminary edit to rebuild essential content
+from evidence instead of anchoring on the initial draft; it does nothing unless initial refinement
+is enabled and retains the shared budgets. `check_fulfillment=true` adds an explicit task-completion
+criterion unless already present. The UI saves all switches in private history. They remain opt-in
+while development experiments and independent evaluation assess their trade-offs.
+
+The model selector accepts only the configured alias, `qwen3.5-flash` or `qwen3.5-plus`; it never
+accepts a browser-supplied provider endpoint. The selected model and per-call output ceiling
+(4,096/8,192/16,384 tokens in the UI, 512..16,384 in the API) are saved with the job and reported
+in the run details. A larger completion ceiling is not a larger overall budget: shared call,
+revision, elapsed-time and observed-token limits still apply. Changing models or output capacity
+also changes cost and cannot be presented as an orchestration-only improvement.
 
 The browser consumes SSE observations with sequence IDs; reconnecting replays missing events.
 `round_complete` contains both the model verdict and the effective verdict after hard gates.
@@ -87,6 +109,7 @@ npm install --no-save playwright
 npx playwright install chromium
 node scripts/workbench_smoke.cjs
 node scripts/workbench_smoke.cjs --live  # Consumes actual model quota
+node scripts/workbench_smoke.cjs --evidence-live  # Experimental real RAGTruth development run
 ```
 
 Screenshots are written under ignored `runs/screenshots`. The test checks desktop/tablet/mobile
