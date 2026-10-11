@@ -35,5 +35,9 @@ jobs:
           git diff --exit-code -- benchmarks/data
           uv run --locked --extra dev python scripts/build_rag_eval.py
           git diff --exit-code -- examples/rag_qa/eval_cases.jsonl
+          uv run --locked --extra dev python scripts/build_multiscenario_eval.py
+          git diff --exit-code -- examples/customer_support/eval_cases.jsonl examples/data_to_text/eval_cases.jsonl
+          uv run --locked --extra dev python scripts/build_web_data.py
+          git diff --exit-code -- src/verifigen/web/data
       - run: uv run --locked --extra dev verifigen demo
       - run: uv run --locked --extra dev python -m build

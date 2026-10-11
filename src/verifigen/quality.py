@@ -6,6 +6,7 @@ import asyncio
 import json
 import time
 import uuid
+from collections.abc import Callable
 from dataclasses import asdict, replace
 from pathlib import Path
 from typing import Any
@@ -22,6 +23,7 @@ from .review import (
     JudgeVerdict,
     QualityBudget,
     QualityResult,
+    QualityRound,
     QualityTask,
     QualityTraceEvent,
     RepairRequest,
@@ -51,7 +53,13 @@ class QualityLoop:
         self.policy = policy or QualityPolicy()
         self.gates = tuple(gates)
 
-    async def run(self, task: QualityTask, *, initial: Any = _UNSET) -> QualityResult:
+    async def run(
+        self,
+        task: QualityTask,
+        *,
+        initial: Any = _UNSET,
+        on_event: Callable[[dict[str, Any]], None] | None = None,
+    ) -> QualityResult:
         started = time.monotonic()
         run_id = uuid.uuid4().hex
         # Snapshot mutable caller input once. Judge and repair see the same evidence.
@@ -65,6 +73,7 @@ class QualityLoop:
         verdicts: list[JudgeVerdict] = []
         feedback_history: list[JudgeVerdict] = []
         gate_reports: list[GateReport] = []
+        rounds: list[QualityRound] = []
         usages: list[Usage] = []
         model_calls = 0
         in_flight_model_calls = 0
@@ -81,6 +90,30 @@ class QualityLoop:
                 fallback_by_reason=dict(task.fallback_by_reason),
             )
 
+        observer = on_event
+
+        def observe(event: str, **details: Any) -> None:
+            nonlocal observer
+            if observer is not None:
+                try:
+                    observer(
+                        json_copy(
+                            {
+                                "event": event,
+                                "elapsed_ms": round((time.monotonic() - started) * 1000, 3),
+                                "details": details,
+                            }
+                        )
+                    )
+                except Exception:
+                    # Presentation or telemetry failures must not change release decisions.
+                    observer = None
+                    trace.append(
+                        QualityTraceEvent(
+                            "observer_error", round((time.monotonic() - started) * 1000, 3), {}
+                        )
+                    )
+
         def emit(event: str, **details: Any) -> None:
             trace.append(
                 QualityTraceEvent(
@@ -89,6 +122,7 @@ class QualityLoop:
                     details,
                 )
             )
+            observe(event, **details)
 
         def render(candidate: Any) -> str:
             if task.renderer is not None:
@@ -128,6 +162,7 @@ class QualityLoop:
                 repair_rounds=repair_rounds,
                 usages=tuple(usages),
                 gate_reports=tuple(gate_reports),
+                rounds=tuple(rounds),
             )
 
         def token_stop() -> str | None:
@@ -271,6 +306,7 @@ class QualityLoop:
             except RuntimeError as exc:
                 return finish(str(exc))
             best_candidate = json_copy(candidate)
+            observe("candidate", round=0, candidate=candidate)
             seen = {digest(candidate)}
 
             while True:
@@ -310,6 +346,11 @@ class QualityLoop:
                             issues=verdict.issues + tuple(gate_issues),
                         )
                 feedback_history.append(effective_verdict)
+                reviewed = QualityRound(
+                    repair_rounds, json_copy(candidate), verdict, effective_verdict
+                )
+                rounds.append(reviewed)
+                observe("round_complete", **asdict(reviewed))
                 decision = self.policy.decide(
                     effective_verdict,
                     min_pass_score=self.budget.min_pass_score,
@@ -334,6 +375,7 @@ class QualityLoop:
                     return finish("no_progress")
                 seen.add(proposed_digest)
                 candidate = proposed
+                observe("candidate", round=repair_rounds, candidate=candidate)
                 emit("repair_committed", round=repair_rounds, candidate_digest=proposed_digest)
 
         try:

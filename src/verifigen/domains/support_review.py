@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any  # noqa: TC003 - used by the runtime renderer annotation
 
-from ..review import Criterion, QualityTask
+from ..review import Criterion, JudgeIssue, QualityTask
 from .support import FULFILLMENT, NEXT_ACTION, NEXT_TEXT, SupportDraft, SupportSource
 
 SUPPORT_CRITERIA = (
@@ -29,6 +29,41 @@ SUPPORT_CRITERIA = (
         "不得声称已经执行退款、承诺到账时限、赠送补偿，或泄露内部处理信息。",
     ),
 )
+
+
+class SupportFactsGate:
+    """Verify structured financial facts; leave text entailment to the Judge."""
+
+    async def check(self, candidate: Any, task: QualityTask) -> tuple[JudgeIssue, ...]:
+        source = SupportSource.model_validate(task.source)
+        refund = source.refund
+        state: str
+        if refund.receipt is not None:
+            state, amount = refund.receipt.status, refund.receipt.amount_cents
+        elif refund.approved_cents is not None:
+            state, amount = "approved", refund.approved_cents
+        elif refund.requested_cents is not None:
+            state, amount = "requested", refund.requested_cents
+        else:
+            state, amount = "not_requested", None
+        expected = {
+            "order_id": source.order.id,
+            "paid_cents": source.order.paid_cents,
+            "order_status": source.order.status,
+            "refund_state": state,
+            "refund_cents": amount,
+            "next_step": NEXT_ACTION[state],
+        }
+        return tuple(
+            JudgeIssue(
+                "general",
+                f"Structured fact /{field} does not match authoritative source.",
+                evidence=f"Expected {value!r}; received {candidate.get(field)!r}.",
+                suggestion="Correct this field and reconcile all user-facing sections with it.",
+            )
+            for field, value in expected.items()
+            if candidate.get(field) != value
+        )
 
 
 def render_support(candidate: Any) -> str:
@@ -59,9 +94,9 @@ def make_support_task(source: dict[str, Any]) -> QualityTask:
             "settled、failed 的文本必须分别准确表达等待审核、尚未到账、尚未确认到账、已到账和处理失败。"
             "只依据当前快照，不作到账时间、退款执行或补偿承诺。"
         ),
-        fallback_text="当前订单或退款信息无法生成经过校验的答复，已转人工客服核实。",
+        fallback_text="当前订单或退款信息无法生成经过校验的答复，请转人工客服核实。",
         renderer=render_support,
     )
 
 
-__all__ = ["SUPPORT_CRITERIA", "make_support_task", "render_support"]
+__all__ = ["SUPPORT_CRITERIA", "SupportFactsGate", "make_support_task", "render_support"]

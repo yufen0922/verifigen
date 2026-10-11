@@ -8,7 +8,9 @@ VerifiGen 已使用 [RAGTruth](https://github.com/ParticleMedia/RAGTruth) 作为
 合成集并列使用：公开集负责外部有效性，合成集负责可控错误类型、工程回归和历史 Qwen 基线。
 
 需要区分“已使用数据集”和“已得到模型效果数字”。600 条样本已经完成数据读取、字段核验和
-确定性选样；当前仓库尚未发布这 600 条上的 Qwen 完整运行记录和修复后盲审结果。任何结果报告都
+确定性选样；2026-10-11 已完成其中全部 420 条评测样本的 Qwen 真实运行，开发集 180 条未混入
+本次效果数字。首轮准确率 78.57%、幻觉召回率 85.71%、误杀率 27.62%；
+[结果与逐条记录](../benchmarks/results/ragtruth-qwen3.5-flash/report.md)已发布。修复后盲审仍待完成。任何结果报告都
 必须注明数据来源，不能把合成集的 73.46% 写成 RAGTruth 修复成功率。
 
 ## 数据集介绍
@@ -32,6 +34,8 @@ RAGTruth 是面向检索增强生成场景的词级幻觉语料。官方数据�
 正确”。VerifiGen 将“至少存在一个 `implicit_true != true` 的 span”定义为本轮有效幻觉正例；
 只含 `implicit_true=true` 的回答不作为幻觉正例，但保留原始标签供审计。`incorrect_refusal` 和
 `truncated` 属于独立质量问题，第一阶段主评测只使用 `quality=good` 的回答。
+需要注意：Judge 使用严格材料支持规则，可能将人工标注为 `implicit_true` 的常识补充也判为
+不支持；这是标签定义与规则之间的潜在误杀来源，不能把全部误杀都解释成模型能力不足。
 
 ## 固定 600 条协议
 
@@ -59,6 +63,25 @@ RAGTruth 是面向检索增强生成场景的词级幻觉语料。官方数据�
 
 ## 如何进入 Agent Loop
 
+完整材料、原回答与人工标注保存在
+[`benchmarks/data/ragtruth-600/`](../benchmarks/data/ragtruth-600/README.md)。复现命令：
+
+```bash
+python scripts/download_ragtruth.py --output runs/ragtruth-official
+python scripts/build_ragtruth_eval.py \
+  --responses runs/ragtruth-official/response.jsonl \
+  --sources runs/ragtruth-official/source_info.jsonl
+python examples/ragtruth/evaluate.py --limit-per-task 140 --concurrency 6 \
+  --output runs/ragtruth-eval
+# 中断后使用同一配置继续，不重复已落盘样本：加 --resume
+python scripts/summarize_ragtruth.py --results runs/ragtruth-eval
+```
+
+`--limit-per-task` 必须是偶数，默认测试集按任务和正负标签配额均衡选取；评测标签不传入模型。
+每条完成即追加记录，恢复时核对模型、材料摘要、预算和样本 ID；一个目录不能混用配置。
+默认每条最多 5 次调用、2 轮修复和 120 秒。该命令消耗真实 API 额度。
+GitHub 对匿名下载可能限流；公开集已随仓库提供，正常运行评测不需要重新下载官方全量文件。
+
 三类任务分别映射为自己的任务适配器：
 
 1. QA 将问题和检索 passages 作为业务证据，要求回答严格受 passages 支持。
@@ -81,13 +104,17 @@ RAGTruth 原始 span 可以评价首轮 Judge，但不能直接评价 Repair 之
 | 修复后结果 | 独立盲审或独立评审加人工仲裁 | 修复成功率、修复回归率、错误放行率、兜底率 |
 | 工程成本 | 运行记录 | 调用次数、Token、平均/P95 时延 |
 
+准确率以全部样本为分母，只有正例 `fail`、负例 `pass` 算正确；`unknown/error` 都不算正确。
+召回率是有效幻觉样本中被判为 `fail` 的比例，误杀率是正常样本中被判为 `fail` 的比例；
+弃权和调用失败另列，不能算作正确检出。精确率与 F1 把“幻觉”视为正类。
+
 对照至少包括原回答直接输出、只 Judge 拦截、普通单轮自我修正和完整有界闭环。所有组使用相同材料、
 模型版本、提示词冻结点和调用预算；否则只能证明多调用了模型，不能证明 Harness 的编排更有效。
 
 ## 与现有结果的关系
 
 - **RAGTruth 600 条：** 已使用并完成固定抽样，证明项目已引入外部公开数据；Qwen 首轮检出和修复后
-  盲审数字尚未发布。
+  执行轨迹已在独立评测集 420 条上发布，共 958 次调用。修复后正确率仍待新标签，不由 Judge 自评代替。
 - **跨场景合成集 180 条：** 已完成 Qwen3.5-Flash 真实实验，共 513 次模型调用；错误初稿修复成功率
   为 119/162，即 73.46%。
 - **不能混写：** 73.46% 只属于 180 条合成集，不能表述为 RAGTruth 指标，也不能表述为生产准确率。

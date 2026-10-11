@@ -6,7 +6,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from ..review import Criterion, QualityTask
+from ..review import Criterion, JudgeIssue, QualityTask
 
 
 class MetricSource(BaseModel):
@@ -68,7 +68,10 @@ def expected_report(source: dict[str, Any]) -> dict[str, Any]:
         f"{parsed.previous_period}{parsed.previous}{parsed.unit}"
     )
     if parsed.previous == 0:
-        sentence = f"{base}，增加{abs(delta)}{parsed.unit}；由于上期为0，环比无法计算。"
+        movement = (
+            "持平" if delta == 0 else f"{'增加' if delta > 0 else '减少'}{abs(delta)}{parsed.unit}"
+        )
+        sentence = f"{base}，{movement}；由于上期为0，环比无法计算。"
     elif direction == "flat":
         sentence = f"{base}，持平，环比0.00%。"
     else:
@@ -92,6 +95,23 @@ def render_report(candidate: Any) -> str:
     return MetricReport.model_validate(candidate).sentence
 
 
+class ReportFactsGate:
+    """Verify source fields and arithmetic, not unrestricted natural-language claims."""
+
+    async def check(self, candidate: Any, task: QualityTask) -> tuple[JudgeIssue, ...]:
+        expected = expected_report(task.source)
+        return tuple(
+            JudgeIssue(
+                "general",
+                f"Structured report /{field} is inconsistent with source or calculation.",
+                evidence=f"Expected {value!r}; received {candidate.get(field)!r}.",
+                suggestion="Recompute from the original source and align the sentence with the fields.",
+            )
+            for field, value in expected.items()
+            if field != "sentence" and candidate.get(field) != value
+        )
+
+
 def make_report_task(source: dict[str, Any]) -> QualityTask:
     MetricSource.model_validate(source)
     return QualityTask(
@@ -113,6 +133,7 @@ __all__ = [
     "MetricReport",
     "MetricSource",
     "REPORT_CRITERIA",
+    "ReportFactsGate",
     "expected_report",
     "make_report_task",
     "render_report",

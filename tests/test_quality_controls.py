@@ -20,6 +20,35 @@ from verifigen import (
 )
 from verifigen.domains.rag_review import CitationGate, make_rag_task
 
+
+async def test_observer_receives_candidate_snapshots_without_leaking_into_metadata_trace():
+    observations = []
+
+    def observe(event):
+        observations.append(event)
+        if event["event"] == "candidate":
+            event["details"]["candidate"]["answer"] = "mutated by observer"
+
+    result = await QualityLoop(judge=ReplayJudge([PASS]), repairer=ReplayRepairer([])).run(
+        task(), initial={"answer": "799"}, on_event=observe
+    )
+    assert result.output == {"answer": "799"}
+    assert result.rounds[0].candidate == {"answer": "799"}
+    assert any(e["event"] == "candidate" for e in observations)
+    assert all("candidate" not in e.details for e in result.trace)
+
+
+async def test_broken_observer_does_not_change_release_decision():
+    def broken(event):
+        raise RuntimeError("UI disconnected")
+
+    result = await QualityLoop(judge=ReplayJudge([PASS]), repairer=ReplayRepairer([])).run(
+        task(), initial={"answer": "799"}, on_event=broken
+    )
+    assert result.status == "passed"
+    assert sum(e.event == "observer_error" for e in result.trace) == 1
+
+
 PASS = JudgeVerdict("pass", 0.95, "Looks correct")
 
 

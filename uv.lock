@@ -7,6 +7,15 @@ resolution-markers = [
 ]
 
 [[package]]
+name = "annotated-doc"
+version = "0.0.5"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/5a/8e/38aa427ed5402449e226975b649c5dc73ccadfefeb95e6aecb8f8ea4b6b6/annotated_doc-0.0.5.tar.gz", hash = "sha256:c7e58ce09192557605d8bbd92836d7e1d520ac9580096042c0bfd197efacf1bb", size = 10758, upload-time = "2026-07-28T13:50:58.129Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/3e/30/e900b21425a860e195f32e37657aa1f7c7f2b1bfb26f03ca209b90933c06/annotated_doc-0.0.5-py3-none-any.whl", hash = "sha256:117bac03a25ede5df5440e855b32d556049ca169ead221505badf432fed4b101", size = 5302, upload-time = "2026-07-28T13:50:57.239Z" },
+]
+
+[[package]]
 name = "annotated-types"
 version = "0.8.0"
 source = { registry = "https://pypi.org/simple" }
@@ -58,6 +67,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/a3/c2/24167ea9858356b47a87a50d39908bfdb72ceeefe0041586e704e5376b3a/certifi-2026.7.22.tar.gz", hash = "sha256:741e2c3b351ddf169a738da9f2c048608ff7f2c5cc02f1ebc6b118bb090d5d55", size = 138112, upload-time = "2026-07-22T03:35:12.644Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/0b/a7/71ac2cff56fec219ed242bb11b8efb69fcc4bec75db06fb7bfe35de520e6/certifi-2026.7.22-py3-none-any.whl", hash = "sha256:62f22742b58a1a33014a2b6b706588a8d7e2a88ae7bd1a6ebe8c992928483775", size = 136983, upload-time = "2026-07-22T03:35:11.276Z" },
+]
+
+[[package]]
+name = "click"
+version = "8.5.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/c7/0e/7fa0ef50764b67090eca4114772a2abf8b6148198475e54c660b97caeee6/click-8.5.0.tar.gz", hash = "sha256:ba0d2089de75ea0310e2dde03160e6ca10009947fb95a182f9b54021bb272e34", size = 382235, upload-time = "2026-08-26T13:33:14.56Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/58/50/6c0d534c5f134586a8e1ba4e330569e32f057e33372ae556463212fb4cd3/click-8.5.0-py3-none-any.whl", hash = "sha256:255bc9599cf7748b4b1a446ccc735421bd08a2ae529a8b88597d3de5664ee360", size = 125251, upload-time = "2026-08-26T13:33:12.928Z" },
 ]
 
 [[package]]
@@ -186,6 +204,22 @@ wheels = [
 [package.optional-dependencies]
 toml = [
     { name = "tomli", marker = "python_full_version <= '3.11'" },
+]
+
+[[package]]
+name = "fastapi"
+version = "0.135.4"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "annotated-doc" },
+    { name = "pydantic" },
+    { name = "starlette" },
+    { name = "typing-extensions" },
+    { name = "typing-inspection" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/31/1e/957e66314411255bd5c4d2c9f5259c3b3b44d8b50a702d38577c950f9d92/fastapi-0.135.4.tar.gz", hash = "sha256:d87c41b0a7bcaa6f14629d73fe48e360821605c7b6d518caacbc00dcf8fa5e0e", size = 396670, upload-time = "2026-04-16T11:39:29.385Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ef/81/32a3db8ed89cd1e616deb31aa0d9c6ec58bb712a20d4c750757d320f8ca8/fastapi-0.135.4-py3-none-any.whl", hash = "sha256:539d3531f8aba9b286ab44658344553f4a4adc218529137501e5d97be071a78b", size = 117403, upload-time = "2026-04-16T11:39:30.896Z" },
 ]
 
 [[package]]
@@ -651,6 +685,15 @@ wheels = [
 ]
 
 [[package]]
+name = "python-dotenv"
+version = "1.2.4"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/74/26/2fbeedb218a787a5eea551c7532cac4e009f83d689dd2faa0d0353473f86/python_dotenv-1.2.4.tar.gz", hash = "sha256:f0d53e69935a851c0dcc78f3ab7aaccd8cabef0b92382b576b824212902873c0", size = 60824, upload-time = "2026-10-01T05:36:10Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/60/d1/38f3a3405989a89ac18390803e70c6ad7c7760da4f9b83cbeca0c44a0c72/python_dotenv-1.2.4-py3-none-any.whl", hash = "sha256:42269a8a5b3fd54ffa6f3d84b18abed50064717576b4ecf03dc4a55d8aa04fdc", size = 23266, upload-time = "2026-10-01T05:36:08.633Z" },
+]
+
+[[package]]
 name = "referencing"
 version = "0.37.0"
 source = { registry = "https://pypi.org/simple" }
@@ -813,6 +856,19 @@ wheels = [
 ]
 
 [[package]]
+name = "starlette"
+version = "0.52.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "anyio" },
+    { name = "typing-extensions", marker = "python_full_version < '3.13'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/c4/68/79977123bb7be889ad680d79a40f339082c1978b5cfcf62c2d8d196873ac/starlette-0.52.1.tar.gz", hash = "sha256:834edd1b0a23167694292e94f597773bc3f89f362be6effee198165a35d62933", size = 2653702, upload-time = "2026-01-18T13:34:11.062Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/81/0d/13d1d239a25cbfb19e740db83143e95c772a1fe10202dda4b76792b114dd/starlette-0.52.1-py3-none-any.whl", hash = "sha256:0029d43eb3d273bc4f83a08720b4912ea4b071087a3b48db01b7c839f7954d74", size = 74272, upload-time = "2026-01-18T13:34:09.188Z" },
+]
+
+[[package]]
 name = "tomli"
 version = "2.4.1"
 source = { registry = "https://pypi.org/simple" }
@@ -900,43 +956,74 @@ wheels = [
 ]
 
 [[package]]
+name = "uvicorn"
+version = "0.54.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "click" },
+    { name = "h11" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/da/34/30e9280707135d2cfc589dfff3cb796bd07a3aeb1a3e415ba09dd89d7bb4/uvicorn-0.54.0.tar.gz", hash = "sha256:a2e33cbfaa0306f8e6b0c13e0cb89d7d7a2da3e62b90c66e18c33d9807b28620", size = 112283, upload-time = "2026-09-25T06:52:37.601Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/38/0c/b54a4fdd7f90a3af8b02ebc9ce6712c2c208b7926a2f7bad95c33ebbe943/uvicorn-0.54.0-py3-none-any.whl", hash = "sha256:505bdb0f318731d45f1f712071fc781a8981f6847a31c902c9f5e652d4f67faf", size = 87427, upload-time = "2026-09-25T06:52:35.829Z" },
+]
+
+[[package]]
 name = "verifigen"
 version = "0.2.0"
 source = { editable = "." }
 dependencies = [
     { name = "jsonschema" },
     { name = "pydantic" },
+    { name = "python-dotenv" },
     { name = "referencing" },
 ]
 
 [package.optional-dependencies]
 dev = [
     { name = "build" },
+    { name = "fastapi" },
     { name = "httpx" },
     { name = "mypy" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
     { name = "pytest-cov" },
     { name = "ruff" },
+    { name = "starlette" },
     { name = "types-jsonschema" },
+    { name = "uvicorn" },
 ]
 llm = [
     { name = "httpx" },
+]
+web = [
+    { name = "fastapi" },
+    { name = "httpx" },
+    { name = "starlette" },
+    { name = "uvicorn" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "build", marker = "extra == 'dev'", specifier = ">=1.2,<2" },
+    { name = "fastapi", marker = "extra == 'dev'", specifier = ">=0.115,<0.136" },
+    { name = "fastapi", marker = "extra == 'web'", specifier = ">=0.115,<0.136" },
     { name = "httpx", marker = "extra == 'dev'", specifier = ">=0.27,<1" },
     { name = "httpx", marker = "extra == 'llm'", specifier = ">=0.27,<1" },
+    { name = "httpx", marker = "extra == 'web'", specifier = ">=0.27,<1" },
     { name = "jsonschema", specifier = ">=4.23,<5" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.14,<2" },
     { name = "pydantic", specifier = ">=2.9,<3" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8,<10" },
     { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.24,<2" },
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=6,<8" },
+    { name = "python-dotenv", specifier = ">=1,<2" },
     { name = "referencing", specifier = ">=0.35,<1" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.9,<1" },
+    { name = "starlette", marker = "extra == 'dev'", specifier = ">=0.46,<1" },
+    { name = "starlette", marker = "extra == 'web'", specifier = ">=0.46,<1" },
     { name = "types-jsonschema", marker = "extra == 'dev'", specifier = ">=4.23,<5" },
+    { name = "uvicorn", marker = "extra == 'dev'", specifier = ">=0.30,<1" },
+    { name = "uvicorn", marker = "extra == 'web'", specifier = ">=0.30,<1" },
 ]
-provides-extras = ["llm", "dev"]
+provides-extras = ["llm", "web", "dev"]

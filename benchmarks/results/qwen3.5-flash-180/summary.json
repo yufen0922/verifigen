@@ -9,14 +9,27 @@
   "total_output_tokens": 641459,
   "note": "Real model outputs over template-generated data; final outputs are scored by deterministic scenario oracles.",
   "overall": {
-    "judge_detection_accuracy": 0.9722222222222222,
+    "judge_detection_accuracy": 0.9611111111111111,
     "bad_case_repair_success": 0.7345679012345679,
     "final_oracle_success": 0.7611111111111111,
     "fallback_rate": 0.08888888888888889,
     "published_outputs": 164,
     "wrong_releases": 27,
     "published_oracle_precision": 0.8353658536585366,
-    "model_calls": 513
+    "model_calls": 513,
+    "cases": 180,
+    "correct": 173,
+    "error_detection_recall": 0.9691358024691358,
+    "false_alarm_rate": 0.1111111111111111,
+    "detection_precision": 0.9874213836477987,
+    "detection_f1": 0.9781931464174456,
+    "first_status_counts": {
+      "pass": 19,
+      "fail": 159,
+      "error": 2
+    },
+    "abstention_rate": 0.0,
+    "call_error_rate": 0.011111111111111112
   },
   "scenarios": {
     "rag": {
@@ -25,15 +38,38 @@
       "bad_case_repair_success": 0.9814814814814815,
       "final_oracle_success": 0.9833333333333333,
       "fallback_rate": 0.0,
-      "published_oracle_precision": 0.9833333333333333
+      "published_oracle_precision": 0.9833333333333333,
+      "correct": 58,
+      "error_detection_recall": 1.0,
+      "false_alarm_rate": 0.3333333333333333,
+      "detection_precision": 0.9642857142857143,
+      "detection_f1": 0.9818181818181818,
+      "first_status_counts": {
+        "pass": 4,
+        "fail": 56
+      },
+      "abstention_rate": 0.0,
+      "call_error_rate": 0.0
     },
     "support": {
       "cases": 60,
-      "judge_detection_accuracy": 0.95,
+      "judge_detection_accuracy": 0.9166666666666666,
       "bad_case_repair_success": 0.6111111111111112,
       "final_oracle_success": 0.65,
       "fallback_rate": 0.21666666666666667,
-      "published_oracle_precision": 0.8297872340425532
+      "published_oracle_precision": 0.8297872340425532,
+      "correct": 55,
+      "error_detection_recall": 0.9074074074074074,
+      "false_alarm_rate": 0.0,
+      "detection_precision": 1.0,
+      "detection_f1": 0.9514563106796117,
+      "first_status_counts": {
+        "pass": 9,
+        "fail": 49,
+        "error": 2
+      },
+      "abstention_rate": 0.0,
+      "call_error_rate": 0.03333333333333333
     },
     "report": {
       "cases": 60,
@@ -41,7 +77,29 @@
       "bad_case_repair_success": 0.6111111111111112,
       "final_oracle_success": 0.65,
       "fallback_rate": 0.05,
-      "published_oracle_precision": 0.6842105263157895
+      "published_oracle_precision": 0.6842105263157895,
+      "correct": 60,
+      "error_detection_recall": 1.0,
+      "false_alarm_rate": 0.0,
+      "detection_precision": 1.0,
+      "detection_f1": 1.0,
+      "first_status_counts": {
+        "pass": 6,
+        "fail": 54
+      },
+      "abstention_rate": 0.0,
+      "call_error_rate": 0.0
     }
+  },
+  "metric_revision": {
+    "date": "2026-10-11",
+    "previous_detection_accuracy": 0.9722222222222222,
+    "corrected_detection_accuracy": 0.9611111111111111,
+    "reason": "Two failed Judge calls were previously counted as correct detections. Only exact pass/fail judgments count as correct; unknown/error never do.",
+    "affected_ids": [
+      "support--approved--wrong_order_id",
+      "support--settled--wrong_paid_amount"
+    ],
+    "model_outputs_changed": false
   }
 }

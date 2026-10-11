@@ -10,7 +10,10 @@ from pathlib import Path
 from typing import Any
 
 from verifigen import QualityBudget, QualityLoop, make_qwen3_8b_stack
+from verifigen.config import ModelSettings
 from verifigen.domains.rag_review import make_rag_task
+from verifigen.metrics import detection_correct as is_detection_correct
+from verifigen.metrics import detection_metrics
 from verifigen.rag_eval import score_rag_output
 from verifigen.retrieval import BM25Retriever
 
@@ -22,7 +25,8 @@ def jsonl(path: Path) -> list[dict[str, Any]]:
 
 
 async def execute(args: argparse.Namespace) -> int:
-    api_key = os.environ.get("DASHSCOPE_API_KEY")
+    settings = ModelSettings.from_env(DIRECTORY.parents[1] / ".env.local")
+    api_key = settings.api_key
     if not api_key:
         raise ValueError("Set DASHSCOPE_API_KEY in the current shell; never commit it")
     cases = jsonl(args.cases)[: args.limit]
@@ -35,7 +39,7 @@ async def execute(args: argparse.Namespace) -> int:
         base_url=os.environ.get(
             "DASHSCOPE_BASE_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1"
         ),
-        model=os.environ.get("DASHSCOPE_MODEL", "qwen3-8b"),
+        model=settings.model,
         thinking_budget=args.thinking_budget,
     )
     records = []
@@ -62,7 +66,7 @@ async def execute(args: argparse.Namespace) -> int:
             budget=QualityBudget(max_model_calls=5, max_repair_rounds=2),
         ).run(make_rag_task(source), initial=case["initial"])
         first_status = result.verdicts[0].status if result.verdicts else "error"
-        detection_correct = (first_status == "pass") == case["initial_should_pass"]
+        detection_correct = is_detection_correct(first_status, case["initial_should_pass"])
         final_correct = score_rag_output(result.output, case)
         records.append(
             {
@@ -91,10 +95,13 @@ async def execute(args: argparse.Namespace) -> int:
 
     bad = [record for record in records if not record["initial_should_pass"]]
     summary = {
+        **detection_metrics(records),
         "model": stack.generator.model,
         "cases": len(records),
         "judge_case_accuracy": sum(item["detection_correct"] for item in records) / len(records),
-        "bad_case_repair_success": sum(item["final_correct"] for item in bad) / len(bad),
+        "bad_case_repair_success": sum(item["final_correct"] for item in bad) / len(bad)
+        if bad
+        else None,
         "final_oracle_success": sum(item["final_correct"] for item in records) / len(records),
         "records": records,
     }

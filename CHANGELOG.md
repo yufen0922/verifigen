@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- Add a live, local FastAPI workbench with SSE rounds, input editing, budgets, cancellation,
+  private persisted history, export and actual benchmark records.
+- Publish the frozen, source-isolated RAGTruth-600 corpus with pinned hashes, license,
+  downloader, builder and resumable live evaluator; keep gold labels out of model inputs.
+- Add support financial-fact and report arithmetic gates independent of the LLM verdict.
+- Add exact detection metrics and source-cluster bootstrap confidence intervals; audit the
+  historical first-Judge accuracy from 97.22% to 96.11% without changing model outputs.
+- Add safe environment configuration and a bounded `verifigen doctor --live` connectivity check.
+
 - Add original, reproducible SVG architecture and decision diagrams in English and Chinese,
   with light/dark theme variants for GitHub documentation.
 - Extract a pure `QualityPolicy` with opt-in score plateau termination.

@@ -9,9 +9,14 @@ scenario-specific deterministic oracles rather than by the LLM Judge itself.
 | Scenario | Cases | First-judge accuracy | Bad-case repair success | Final oracle success | Fallback | Published precision |
 |---|---:|---:|---:|---:|---:|---:|
 | RAG | 60 | 96.67% | 98.15% | 98.33% | 0.00% | 98.33% |
-| Customer support | 60 | 95.00% | 61.11% | 65.00% | 21.67% | 82.98% |
+| Customer support | 60 | 91.67% | 61.11% | 65.00% | 21.67% | 82.98% |
 | Data-to-text report | 60 | 100.00% | 61.11% | 65.00% | 5.00% | 68.42% |
-| **Overall** | **180** | **97.22%** | **73.46%** | **76.11%** | **8.89%** | **83.54%** |
+| **Overall** | **180** | **96.11%** | **73.46%** | **76.11%** | **8.89%** | **83.54%** |
+
+Metric correction (2026-10-11): the previous 97.22% counted two failed Judge calls as correct
+detections. Exact `pass`/`fail` judgments now determine correctness; `unknown` and `error` never
+count as correct. No model output, repair outcome or call count changed. The original value and
+affected IDs are preserved in `summary.json.metric_revision`.
 
 The run made 513 model calls and used 866,953 input tokens plus 641,459 output tokens. The Judge
 published 164 outputs; 137 passed the independent oracle and 27 were incorrect releases.

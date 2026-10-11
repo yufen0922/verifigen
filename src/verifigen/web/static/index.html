@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>VerifiGen · Workbench</title>
+    <link rel="stylesheet" href="/static/style.css" />
+    <script defer src="/static/lucide.min.js"></script>
+    <script defer src="/static/app.js"></script>
+  </head>
+  <body>
+    <header class="header">
+      <a class="brand" href="/"
+        ><span class="brand-symbol">V</span><strong>VerifiGen</strong
+        ><span class="edition">Workbench</span></a
+      >
+      <div class="connection">
+        <span id="connection-dot" class="dot"></span
+        ><span id="model-label">连接中</span><span class="tag">LIVE</span>
+      </div>
+    </header>
+    <nav class="tabs" aria-label="视图">
+      <button class="tab active" data-view="run">
+        <i data-lucide="workflow"></i>运行
+      </button>
+      <button class="tab" data-view="history">
+        <i data-lucide="history"></i>历史记录
+      </button>
+      <button class="tab" data-view="evaluation">
+        <i data-lucide="chart-no-axes-combined"></i>评测结果
+      </button>
+      <a href="/openapi.json" target="_blank" rel="noopener" class="api-link"
+        >API<i data-lucide="arrow-up-right"></i
+      ></a>
+    </nav>
+    <main>
+      <div id="notice" role="alert" hidden></div>
+      <section id="run-view" class="view">
+        <div class="workspace-bar">
+          <div class="scenario-field">
+            <label for="preset">场景</label
+            ><select id="preset" aria-label="选择场景"></select
+            ><span id="dataset-tag" class="tag muted">—</span>
+          </div>
+          <div class="commands">
+            <button
+              id="reset"
+              class="icon-button"
+              title="恢复场景输入"
+              aria-label="恢复场景输入"
+            >
+              <i data-lucide="rotate-ccw"></i>
+            </button>
+            <button
+              id="export"
+              class="icon-button"
+              title="导出运行 JSON"
+              aria-label="导出运行 JSON"
+              disabled
+            >
+              <i data-lucide="download"></i>
+            </button>
+            <button id="stop" class="button secondary" hidden>
+              <i data-lucide="square"></i>停止
+            </button>
+            <button id="run" class="button primary">
+              <i data-lucide="play"></i>运行校验
+            </button>
+          </div>
+        </div>
+        <div class="workspace">
+          <section class="inputs">
+            <div class="section-title">
+              <h1>任务输入</h1>
+              <span id="case-id" class="mono subtle"></span>
+            </div>
+            <label class="field-label" for="prompt">任务</label
+            ><textarea id="prompt" rows="3" spellcheck="false"></textarea>
+            <div class="field-heading">
+              <label for="source">业务证据</label
+              ><span class="mono subtle">JSON</span>
+            </div>
+            <textarea
+              id="source"
+              class="code source-editor"
+              spellcheck="false"
+            ></textarea>
+            <div class="field-heading">
+              <label for="initial">候选初稿</label
+              ><label class="toggle-label"
+                ><input id="generate" type="checkbox" />模型生成</label
+              >
+            </div>
+            <textarea
+              id="initial"
+              class="code candidate-editor"
+              spellcheck="false"
+            ></textarea>
+            <details class="rules">
+              <summary>
+                质量规则与输出 Schema<i data-lucide="chevron-down"></i>
+              </summary>
+              <label class="field-label" for="criteria">质量规则</label
+              ><textarea
+                id="criteria"
+                class="code"
+                rows="8"
+                spellcheck="false"
+              ></textarea>
+              <label class="field-label" for="schema">输出 Schema</label
+              ><textarea
+                id="schema"
+                class="code"
+                rows="8"
+                spellcheck="false"
+              ></textarea>
+              <label class="field-label" for="instructions">场景指令</label>
+              <textarea id="instructions" rows="4" maxlength="8000"></textarea>
+              <label class="field-label" for="fallback-text"
+                >默认兜底文案</label
+              >
+              <textarea id="fallback-text" rows="2" maxlength="1000"></textarea>
+              <label class="field-label" for="fallback-reasons"
+                >按终止原因兜底 · JSON</label
+              >
+              <textarea
+                id="fallback-reasons"
+                class="code"
+                rows="4"
+                spellcheck="false"
+              ></textarea>
+            </details>
+            <details class="rules" open>
+              <summary>执行预算<i data-lucide="settings-2"></i></summary>
+              <div class="budget-grid">
+                <label
+                  >评分阈值<input
+                    id="threshold"
+                    type="number"
+                    value="0.8"
+                    min="0"
+                    max="1"
+                    step="0.05"
+                /></label>
+                <label
+                  >修复上限<input
+                    id="rounds"
+                    type="number"
+                    value="2"
+                    min="0"
+                    max="2"
+                    step="1"
+                /></label>
+                <label
+                  >调用上限<input
+                    id="calls"
+                    type="number"
+                    value="5"
+                    min="0"
+                    max="7"
+                    step="1"
+                /></label>
+                <label
+                  >超时 / 秒<input
+                    id="deadline"
+                    type="number"
+                    value="120"
+                    min="1"
+                    max="180"
+                    step="1"
+                /></label>
+                <label
+                  >Token 阈值<input
+                    id="tokens"
+                    type="number"
+                    placeholder="不设"
+                    min="1"
+                    max="100000"
+                    step="1000"
+                /></label>
+                <label
+                  >评分停滞轮数<select id="patience">
+                    <option value="">关闭</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                  </select></label
+                >
+              </div>
+              <label class="toggle-label"
+                ><input id="citation-gate" type="checkbox" />引用 ID 关卡</label
+              >
+            </details>
+          </section>
+          <section class="execution">
+            <div class="section-title">
+              <h2>执行过程</h2>
+              <span id="run-state" class="state idle">等待运行</span>
+            </div>
+            <div class="flow" aria-label="执行阶段">
+              <div data-stage="generator">
+                <i data-lucide="sparkles"></i><span>Generator</span>
+              </div>
+              <i data-lucide="chevron-right"></i>
+              <div data-stage="judge">
+                <i data-lucide="scan-text"></i><span>Judge</span>
+              </div>
+              <i data-lucide="chevron-right"></i>
+              <div data-stage="gate">
+                <i data-lucide="shield-check"></i><span>Gate</span>
+              </div>
+              <i data-lucide="chevron-right"></i>
+              <div data-stage="repair">
+                <i data-lucide="wrench"></i><span>Repair</span>
+              </div>
+            </div>
+            <div class="metrics">
+              <div><span>当前评分</span><strong id="score">—</strong></div>
+              <div><span>模型调用</span><strong id="call-count">0</strong></div>
+              <div>
+                <span>修复轮数</span><strong id="repair-count">0</strong>
+              </div>
+              <div><span>Token</span><strong id="token-count">—</strong></div>
+            </div>
+            <div class="result-heading">
+              <h2>最终输出</h2>
+              <span id="elapsed" class="mono subtle">—</span>
+            </div>
+            <div id="final-output" class="final-output empty">尚无发布结果</div>
+            <div id="reason" class="reason" hidden></div>
+            <div class="result-heading">
+              <h2>判定与修复</h2>
+              <span id="round-count" class="subtle">0 轮判定</span>
+            </div>
+            <div id="round-list" class="round-list">
+              <div class="empty-state">
+                <i data-lucide="list-checks"></i><span>暂无判定记录</span>
+              </div>
+            </div>
+            <details class="rules">
+              <summary>事件日志<i data-lucide="list"></i></summary>
+              <ol id="event-log" class="event-log"></ol>
+            </details>
+          </section>
+        </div>
+        <section class="comparison" id="comparison" hidden>
+          <div class="section-title">
+            <h2>候选对照</h2>
+            <select id="compare-round" aria-label="选择候选轮次"></select>
+          </div>
+          <div class="comparison-grid">
+            <div>
+              <h3>初稿</h3>
+              <pre id="before"></pre>
+            </div>
+            <div>
+              <h3>当前候选 · 待门禁决策</h3>
+              <pre id="after"></pre>
+            </div>
+          </div>
+        </section>
+      </section>
+      <section id="history-view" class="view" hidden>
+        <div class="section-title">
+          <h1>历史记录</h1>
+          <button
+            id="refresh-history"
+            class="icon-button"
+            title="刷新"
+            aria-label="刷新历史"
+          >
+            <i data-lucide="refresh-cw"></i>
+          </button>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>时间</th>
+                <th>场景</th>
+                <th>模型</th>
+                <th>状态</th>
+                <th>调用</th>
+                <th>终止原因</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="history-rows"></tbody>
+          </table>
+        </div>
+      </section>
+      <section id="evaluation-view" class="view" hidden>
+        <div class="section-title">
+          <h1>评测结果</h1>
+          <select id="evaluation-select" aria-label="选择评测数据集"></select>
+        </div>
+        <p id="evaluation-note" class="evaluation-note"></p>
+        <div class="metrics evaluation-metrics" id="evaluation-metrics"></div>
+        <div class="filter-bar">
+          <h2>逐条结果</h2>
+          <select id="evaluation-filter" aria-label="筛选结果">
+            <option value="all">全部</option>
+            <option value="wrong">首轮误判</option>
+            <option value="release">错误放行</option>
+            <option value="fallback">兜底</option>
+          </select>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>样本</th>
+                <th>任务</th>
+                <th>初稿标签</th>
+                <th>首轮判断</th>
+                <th>最终状态</th>
+                <th>调用</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="evaluation-rows"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+    <dialog id="record-dialog">
+      <div class="dialog-heading">
+        <h2>样本记录</h2>
+        <button
+          id="close-dialog"
+          class="icon-button"
+          title="关闭"
+          aria-label="关闭记录"
+        >
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+      <pre id="record-content"></pre>
+    </dialog>
+    <footer>
+      <span>VerifiGen <span class="mono">v0.2</span></span
+      ><span id="footer-run">Local workspace</span
+      ><a
+        href="https://github.com/yufen0922/verifigen"
+        target="_blank"
+        rel="noopener"
+        >GitHub<i data-lucide="arrow-up-right"></i
+      ></a>
+    </footer>
+  </body>
+</html>

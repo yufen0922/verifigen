@@ -162,6 +162,14 @@ class GateReport:
 
 
 @dataclass(frozen=True)
+class QualityRound:
+    round_index: int
+    candidate: Any
+    verdict: JudgeVerdict
+    effective_verdict: JudgeVerdict
+
+
+@dataclass(frozen=True)
 class QualityResult:
     run_id: str
     status: Literal["passed", "fallback"]
@@ -175,6 +183,7 @@ class QualityResult:
     repair_rounds: int
     usages: tuple[Usage, ...]
     gate_reports: tuple[GateReport, ...] = ()
+    rounds: tuple[QualityRound, ...] = ()
 
     def to_dict(self) -> dict[str, Any]:
         """Export the full result; source-derived candidate text may be sensitive."""

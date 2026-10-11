@@ -1,9 +1,10 @@
 include README.md README.zh-CN.md LICENSE CHANGELOG.md CONTRIBUTING.md SECURITY.md CODE_OF_CONDUCT.md ROADMAP.md
 include uv.lock .env.example .gitignore .gitattributes Makefile
-recursive-include docs *.md *.svg
+recursive-include docs *.md *.svg *.png
 recursive-include examples *.py *.jsonl
-recursive-include scripts *.py
+recursive-include scripts *.py *.cjs
 recursive-include benchmarks/data *.jsonl *.md
+recursive-include benchmarks/data *.json LICENSE*
 prune .github
 prune benchmarks/results
 prune tests

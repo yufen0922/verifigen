@@ -1,0 +1,1387 @@
+{
+  "evaluation_protocol_version": 2,
+  "runtime_config": {
+    "budget": {
+      "max_model_calls": 5,
+      "max_repair_rounds": 2,
+      "deadline_seconds": 120.0,
+      "min_pass_score": 0.8,
+      "max_observed_tokens": null
+    },
+    "policy": {
+      "score_patience": null,
+      "min_score_gain": 0.01
+    },
+    "schema_gate": true,
+    "rag_citation_gate": true,
+    "business_facts_gates": true
+  },
+  "dataset_sha256": {
+    "rag": "6fcac4694ef66548bb376fc4787d71e7fb4296c290c03cc2608dc0a0b09ce6b4",
+    "support": "04771f3e299cf2780042f452b9889c710af084270595bb8fbcfeb7683da626d7",
+    "report": "5faf214cea6e02c5cc93c818f1c1079749a75f017bf03d5868a252b8e34c5312"
+  },
+  "selected_case_ids": [
+    "headphones--clean",
+    "headphones--cross_category",
+    "support--not_requested--clean",
+    "support--not_requested--wrong_order_id",
+    "report--orders_up--clean",
+    "report--orders_up--wrong_current"
+  ],
+  "mode": "qwen",
+  "model": "qwen3.5-flash",
+  "thinking_budget": 1024,
+  "concurrency": 2,
+  "note": "Qwen outputs are scored by deterministic scenario oracles.",
+  "cases": 6,
+  "overall": {
+    "cases": 6,
+    "correct": 6,
+    "judge_detection_accuracy": 1.0,
+    "error_detection_recall": 1.0,
+    "false_alarm_rate": 0.0,
+    "detection_precision": 1.0,
+    "detection_f1": 1.0,
+    "first_status_counts": {
+      "pass": 3,
+      "fail": 3
+    },
+    "abstention_rate": 0.0,
+    "call_error_rate": 0.0,
+    "bad_case_repair_success": 0.6666666666666666,
+    "final_oracle_success": 0.8333333333333334,
+    "fallback_rate": 0.16666666666666666,
+    "published_outputs": 5,
+    "wrong_releases": 0,
+    "published_oracle_precision": 1.0,
+    "model_calls": 13,
+    "cases_with_gate_rejections": 3
+  },
+  "scenarios": {
+    "rag": {
+      "cases": 2,
+      "correct": 2,
+      "judge_detection_accuracy": 1.0,
+      "error_detection_recall": 1.0,
+      "false_alarm_rate": 0.0,
+      "detection_precision": 1.0,
+      "detection_f1": 1.0,
+      "first_status_counts": {
+        "pass": 1,
+        "fail": 1
+      },
+      "abstention_rate": 0.0,
+      "call_error_rate": 0.0,
+      "initial_pass_rate": 0.5,
+      "bad_case_repair_success": 1.0,
+      "final_oracle_success": 1.0,
+      "fallback_rate": 0.0,
+      "published_outputs": 2,
+      "wrong_releases": 0,
+      "published_oracle_precision": 1.0,
+      "avg_repair_rounds": 0.5,
+      "avg_model_calls": 2.0,
+      "input_tokens": 5759,
+      "output_tokens": 4891
+    },
+    "support": {
+      "cases": 2,
+      "correct": 2,
+      "judge_detection_accuracy": 1.0,
+      "error_detection_recall": 1.0,
+      "false_alarm_rate": 0.0,
+      "detection_precision": 1.0,
+      "detection_f1": 1.0,
+      "first_status_counts": {
+        "pass": 1,
+        "fail": 1
+      },
+      "abstention_rate": 0.0,
+      "call_error_rate": 0.0,
+      "initial_pass_rate": 0.5,
+      "bad_case_repair_success": 1.0,
+      "final_oracle_success": 1.0,
+      "fallback_rate": 0.0,
+      "published_outputs": 2,
+      "wrong_releases": 0,
+      "published_oracle_precision": 1.0,
+      "avg_repair_rounds": 0.5,
+      "avg_model_calls": 2.0,
+      "input_tokens": 8141,
+      "output_tokens": 4860
+    },
+    "report": {
+      "cases": 2,
+      "correct": 2,
+      "judge_detection_accuracy": 1.0,
+      "error_detection_recall": 1.0,
+      "false_alarm_rate": 0.0,
+      "detection_precision": 1.0,
+      "detection_f1": 1.0,
+      "first_status_counts": {
+        "pass": 1,
+        "fail": 1
+      },
+      "abstention_rate": 0.0,
+      "call_error_rate": 0.0,
+      "initial_pass_rate": 0.5,
+      "bad_case_repair_success": 0.0,
+      "final_oracle_success": 0.5,
+      "fallback_rate": 0.5,
+      "published_outputs": 1,
+      "wrong_releases": 0,
+      "published_oracle_precision": 1.0,
+      "avg_repair_rounds": 1.0,
+      "avg_model_calls": 2.5,
+      "input_tokens": 8420,
+      "output_tokens": 6450
+    }
+  },
+  "issue_counts": {
+    "grounding": 1,
+    "citation": 1,
+    "completeness": 1,
+    "consistency": 6,
+    "factual_grounding": 1,
+    "numeric_fidelity": 1,
+    "derivation": 3
+  },
+  "reason_counts": {
+    "judge_passed": 5,
+    "no_progress": 1
+  },
+  "total_input_tokens": 22320,
+  "total_output_tokens": 16201,
+  "records": [
+    {
+      "id": "headphones--clean",
+      "scenario": "rag",
+      "initial_should_pass": true,
+      "first_judge_status": "pass",
+      "detection_correct": true,
+      "final_correct": true,
+      "status": "passed",
+      "reason": "judge_passed",
+      "repair_rounds": 0,
+      "model_calls": 1,
+      "input_tokens": 1143,
+      "output_tokens": 1118,
+      "output": {
+        "answer": "符合退货条件的耳机，可以在收货后七天内申请退货。 [KB-HEADPHONE-RETURN-7D] 非质量问题下，耳机拆封后不适用七天无理由退货。 [KB-HEADPHONE-OPENED] 非质量问题的耳机退货运费由客户承担。 [KB-HEADPHONE-FEE]",
+        "citations": [
+          "KB-HEADPHONE-RETURN-7D",
+          "KB-HEADPHONE-OPENED",
+          "KB-HEADPHONE-FEE"
+        ]
+      },
+      "best_candidate": {
+        "answer": "符合退货条件的耳机，可以在收货后七天内申请退货。 [KB-HEADPHONE-RETURN-7D] 非质量问题下，耳机拆封后不适用七天无理由退货。 [KB-HEADPHONE-OPENED] 非质量问题的耳机退货运费由客户承担。 [KB-HEADPHONE-FEE]",
+        "citations": [
+          "KB-HEADPHONE-RETURN-7D",
+          "KB-HEADPHONE-OPENED",
+          "KB-HEADPHONE-FEE"
+        ]
+      },
+      "gate_reports": [
+        {
+          "round_index": 0,
+          "gate_index": 0,
+          "issues": []
+        },
+        {
+          "round_index": 0,
+          "gate_index": 1,
+          "issues": []
+        }
+      ],
+      "gate_rejected_rounds": 0,
+      "trace": [
+        {
+          "event": "started",
+          "elapsed_ms": 0.151,
+          "details": {
+            "criteria": [
+              "grounding",
+              "citation",
+              "completeness",
+              "consistency",
+              "relevance"
+            ],
+            "max_repair_rounds": 2,
+            "budget": {
+              "max_model_calls": 5,
+              "max_repair_rounds": 2,
+              "deadline_seconds": 120.0,
+              "min_pass_score": 0.8,
+              "max_observed_tokens": null
+            },
+            "policy": {
+              "score_patience": null,
+              "min_score_gain": 0.01
+            }
+          }
+        },
+        {
+          "event": "call_started",
+          "elapsed_ms": 1.394,
+          "details": {
+            "role": "judge",
+            "model_calls": 1
+          }
+        },
+        {
+          "event": "judged",
+          "elapsed_ms": 11797.614,
+          "details": {
+            "round": 0,
+            "status": "pass",
+            "score": 1.0,
+            "issue_ids": [],
+            "provider": "qwen3.5-flash",
+            "total_tokens": 2261
+          }
+        },
+        {
+          "event": "gate_checked",
+          "elapsed_ms": 11798.052,
+          "details": {
+            "gate_index": 0,
+            "issue_count": 0
+          }
+        },
+        {
+          "event": "gate_checked",
+          "elapsed_ms": 11798.322,
+          "details": {
+            "gate_index": 1,
+            "issue_count": 0
+          }
+        },
+        {
+          "event": "decision",
+          "elapsed_ms": 11798.393,
+          "details": {
+            "round": 0,
+            "action": "publish",
+            "reason": "judge_passed"
+          }
+        },
+        {
+          "event": "published",
+          "elapsed_ms": 11798.4,
+          "details": {
+            "reason": "judge_passed"
+          }
+        }
+      ],
+      "verdicts": [
+        {
+          "status": "pass",
+          "score": 1.0,
+          "summary": "候选回答完整覆盖了用户关于退货期限、拆封后是否支持无理由退货以及退货运费承担方的三个问题。每一项结论均直接源自提供的检索片段，行内引用格式正确且与citations列表一致，无事实臆测或矛盾之处。",
+          "issues": []
+        }
+      ],
+      "issue_ids": []
+    },
+    {
+      "id": "headphones--cross_category",
+      "scenario": "rag",
+      "initial_should_pass": false,
+      "first_judge_status": "fail",
+      "detection_correct": true,
+      "final_correct": true,
+      "status": "passed",
+      "reason": "judge_passed",
+      "repair_rounds": 1,
+      "model_calls": 3,
+      "input_tokens": 4616,
+      "output_tokens": 3773,
+      "output": {
+        "answer": "符合退货条件的耳机，可以在收货后七天内申请退货 [KB-HEADPHONE-RETURN-7D]。非质量问题下，耳机拆封后不适用七天无理由退货 [KB-HEADPHONE-OPENED]。非质量问题的耳机退货运费由客户承担 [KB-HEADPHONE-FEE]。",
+        "citations": [
+          "KB-HEADPHONE-RETURN-7D",
+          "KB-HEADPHONE-OPENED",
+          "KB-HEADPHONE-FEE"
+        ]
+      },
+      "best_candidate": {
+        "answer": "符合退货条件的耳机，可以在收货后七天内申请退货 [KB-HEADPHONE-RETURN-7D]。非质量问题下，耳机拆封后不适用七天无理由退货 [KB-HEADPHONE-OPENED]。非质量问题的耳机退货运费由客户承担 [KB-HEADPHONE-FEE]。",
+        "citations": [
+          "KB-HEADPHONE-RETURN-7D",
+          "KB-HEADPHONE-OPENED",
+          "KB-HEADPHONE-FEE"
+        ]
+      },
+      "gate_reports": [
+        {
+          "round_index": 0,
+          "gate_index": 0,
+          "issues": []
+        },
+        {
+          "round_index": 0,
+          "gate_index": 1,
+          "issues": [
+            {
+              "criterion_id": "citation",
+              "message": "Citations refer to passages outside the retrieved context.",
+              "evidence": "Unknown IDs: KB-LAPTOP-FEE, KB-LAPTOP-OPENED, KB-LAPTOP-RETURN-15D",
+              "suggestion": "Use only retrieved chunk IDs and remove unsupported claims."
+            }
+          ]
+        },
+        {
+          "round_index": 1,
+          "gate_index": 0,
+          "issues": []
+        },
+        {
+          "round_index": 1,
+          "gate_index": 1,
+          "issues": []
+        }
+      ],
+      "gate_rejected_rounds": 1,
+      "trace": [
+        {
+          "event": "started",
+          "elapsed_ms": 0.164,
+          "details": {
+            "criteria": [
+              "grounding",
+              "citation",
+              "completeness",
+              "consistency",
+              "relevance"
+            ],
+            "max_repair_rounds": 2,
+            "budget": {
+              "max_model_calls": 5,
+              "max_repair_rounds": 2,
+              "deadline_seconds": 120.0,
+              "min_pass_score": 0.8,
+              "max_observed_tokens": null
+            },
+            "policy": {
+              "score_patience": null,
+              "min_score_gain": 0.01
+            }
+          }
+        },
+        {
+          "event": "call_started",
+          "elapsed_ms": 1.342,
+          "details": {
+            "role": "judge",
+            "model_calls": 1
+          }
+        },
+        {
+          "event": "judged",
+          "elapsed_ms": 14540.457,
+          "details": {
+            "round": 0,
+            "status": "fail",
+            "score": 0.0,
+            "issue_ids": [
+              "grounding",
+              "citation",
+              "completeness",
+              "consistency"
+            ],
+            "provider": "qwen3.5-flash",
+            "total_tokens": 2579
+          }
+        },
+        {
+          "event": "gate_checked",
+          "elapsed_ms": 14540.786,
+          "details": {
+            "gate_index": 0,
+            "issue_count": 0
+          }
+        },
+        {
+          "event": "gate_checked",
+          "elapsed_ms": 14540.935,
+          "details": {
+            "gate_index": 1,
+            "issue_count": 1
+          }
+        },
+        {
+          "event": "decision",
+          "elapsed_ms": 14541.013,
+          "details": {
+            "round": 0,
+            "action": "repair",
+            "reason": "issues_found"
+          }
+        },
+        {
+          "event": "call_started",
+          "elapsed_ms": 14541.033,
+          "details": {
+            "role": "repair",
+            "model_calls": 2
+          }
+        },
+        {
+          "event": "call_finished",
+          "elapsed_ms": 26698.079,
+          "details": {
+            "role": "repair",
+            "provider": "qwen3.5-flash",
+            "total_tokens": 3101
+          }
+        },
+        {
+          "event": "repair_committed",
+          "elapsed_ms": 26698.137,
+          "details": {
+            "round": 1,
+            "candidate_digest": "0131e93bc208dc8e07d73d1323f264031b8f6633c8ba3e20180664857678369d"
+          }
+        },
+        {
+          "event": "call_started",
+          "elapsed_ms": 26698.147,
+          "details": {
+            "role": "judge",
+            "model_calls": 3
+          }
+        },
+        {
+          "event": "judged",
+          "elapsed_ms": 38791.192,
+          "details": {
+            "round": 1,
+            "status": "pass",
+            "score": 1.0,
+            "issue_ids": [],
+            "provider": "qwen3.5-flash",
+            "total_tokens": 2709
+          }
+        },
+        {
+          "event": "gate_checked",
+          "elapsed_ms": 38791.541,
+          "details": {
+            "gate_index": 0,
+            "issue_count": 0
+          }
+        },
+        {
+          "event": "gate_checked",
+          "elapsed_ms": 38791.654,
+          "details": {
+            "gate_index": 1,
+            "issue_count": 0
+          }
+        },
+        {
+          "event": "decision",
+          "elapsed_ms": 38791.708,
+          "details": {
+            "round": 1,
+            "action": "publish",
+            "reason": "judge_passed"
+          }
+        },
+        {
+          "event": "published",
+          "elapsed_ms": 38791.714,
+          "details": {
+            "reason": "judge_passed"
+          }
+        }
+      ],
+      "verdicts": [
+        {
+          "status": "fail",
+          "score": 0.0,
+          "summary": "候选回答完全错误，提供了关于笔记本电脑的政策而非用户询问的耳机政策，且引用了不存在的片段ID。",
+          "issues": [
+            {
+              "criterion_id": "grounding",
+              "message": "答案中的事实（笔记本电脑退货期限、拆封条件、运费）无法由提供的耳机检索片段支持，属于臆测或无关信息。",
+              "evidence": "Candidate answer mentions 'laptop' and '15 days', while retrieved_chunks only contain data for 'headphones' with a '7 days' return period.",
+              "suggestion": ""
+            },
+            {
+              "criterion_id": "citation",
+              "message": "引用的片段ID（KB-LAPTOP-...）在提供的retrieved_chunks中不存在，且与问题类别（耳机）不符。",
+              "evidence": "Candidate citations include 'KB-LAPTOP-RETURN-15D', but the provided chunks are 'KB-HEADPHONE-OPENED', 'KB-HEADPHONE-FEE', and 'KB-HEADPHONE-RETURN-7D'.",
+              "suggestion": ""
+            },
+            {
+              "criterion_id": "completeness",
+              "message": "未回答用户关于耳机的退货期限、拆封资格和运费规则的问题。",
+              "evidence": "The candidate output discusses laptops instead of headphones, failing to address the specific question about headphone policies found in the context.",
+              "suggestion": ""
+            },
+            {
+              "criterion_id": "consistency",
+              "message": "答案内容与检索到的商品类别（耳机）不一致，混用了其他商品类别（笔记本电脑）的政策。",
+              "evidence": "Context specifies product_category: 'headphones', but candidate answer explicitly states '符合退货条件的笔记本电脑' (Laptops that meet return conditions).",
+              "suggestion": ""
+            }
+          ]
+        },
+        {
+          "status": "pass",
+          "score": 1.0,
+          "summary": "候选回答完整且准确地回答了用户关于耳机退货期限、拆封后资格及运费规则的所有问题。所有事实均直接源自提供的检索片段，行内引用格式正确，citations列表与答案内容完全一致且无矛盾。",
+          "issues": []
+        }
+      ],
+      "issue_ids": [
+        "grounding",
+        "citation",
+        "completeness",
+        "consistency"
+      ]
+    },
+    {
+      "id": "support--not_requested--clean",
+      "scenario": "support",
+      "initial_should_pass": true,
+      "first_judge_status": "pass",
+      "detection_correct": true,
+      "final_correct": true,
+      "status": "passed",
+      "reason": "judge_passed",
+      "repair_rounds": 0,
+      "model_calls": 1,
+      "input_tokens": 1707,
+      "output_tokens": 1118,
+      "output": {
+        "order_id": "ORDER-0001",
+        "paid_cents": 25900,
+        "order_status": "paid",
+        "refund_state": "not_requested",
+        "refund_cents": null,
+        "next_step": "submit_request",
+        "tone": "empathetic",
+        "sections": {
+          "payment": "订单ORDER-0001实付259.00元。",
+          "fulfillment": "订单已支付，尚未发货。",
+          "refund": "当前没有退款申请。",
+          "next_step": "如需售后，可提交申请，由平台审核。"
+        }
+      },
+      "best_candidate": {
+        "order_id": "ORDER-0001",
+        "paid_cents": 25900,
+        "order_status": "paid",
+        "refund_state": "not_requested",
+        "refund_cents": null,
+        "next_step": "submit_request",
+        "tone": "empathetic",
+        "sections": {
+          "payment": "订单ORDER-0001实付259.00元。",
+          "fulfillment": "订单已支付，尚未发货。",
+          "refund": "当前没有退款申请。",
+          "next_step": "如需售后，可提交申请，由平台审核。"
+        }
+      },
+      "gate_reports": [
+        {
+          "round_index": 0,
+          "gate_index": 0,
+          "issues": []
+        },
+        {
+          "round_index": 0,
+          "gate_index": 1,
+          "issues": []
+        }
+      ],
+      "gate_rejected_rounds": 0,
+      "trace": [
+        {
+          "event": "started",
+          "elapsed_ms": 0.342,
+          "details": {
+            "criteria": [
+              "factual_grounding",
+              "refund_status",
+              "next_action",
+              "consistency",
+              "safety"
+            ],
+            "max_repair_rounds": 2,
+            "budget": {
+              "max_model_calls": 5,
+              "max_repair_rounds": 2,
+              "deadline_seconds": 120.0,
+              "min_pass_score": 0.8,
+              "max_observed_tokens": null
+            },
+            "policy": {
+              "score_patience": null,
+              "min_score_gain": 0.01
+            }
+          }
+        },
+        {
+          "event": "call_started",
+          "elapsed_ms": 6.338,
+          "details": {
+            "role": "judge",
+            "model_calls": 1
+          }
+        },
+        {
+          "event": "judged",
+          "elapsed_ms": 11053.812,
+          "details": {
+            "round": 0,
+            "status": "pass",
+            "score": 1.0,
+            "issue_ids": [],
+            "provider": "qwen3.5-flash",
+            "total_tokens": 2825
+          }
+        },
+        {
+          "event": "gate_checked",
+          "elapsed_ms": 11054.667,
+          "details": {
+            "gate_index": 0,
+            "issue_count": 0
+          }
+        },
+        {
+          "event": "gate_checked",
+          "elapsed_ms": 11055.337,
+          "details": {
+            "gate_index": 1,
+            "issue_count": 0
+          }
+        },
+        {
+          "event": "decision",
+          "elapsed_ms": 11055.443,
+          "details": {
+            "round": 0,
+            "action": "publish",
+            "reason": "judge_passed"
+          }
+        },
+        {
+          "event": "published",
+          "elapsed_ms": 11055.535,
+          "details": {
+            "reason": "judge_passed"
+          }
+        }
+      ],
+      "verdicts": [
+        {
+          "status": "pass",
+          "score": 1.0,
+          "summary": "候选输出完全符合业务上下文和所有质量准则。订单号、金额、状态与快照一致；退款状态判定正确（无申请）；下一步动作映射准确；四段文本内容、语气及金额格式均符合要求，无违规承诺或内部信息泄露。",
+          "issues": []
+        }
+      ],
+      "issue_ids": []
+    },
+    {
+      "id": "support--not_requested--wrong_order_id",
+      "scenario": "support",
+      "initial_should_pass": false,
+      "first_judge_status": "fail",
+      "detection_correct": true,
+      "final_correct": true,
+      "status": "passed",
+      "reason": "judge_passed",
+      "repair_rounds": 1,
+      "model_calls": 3,
+      "input_tokens": 6434,
+      "output_tokens": 3742,
+      "output": {
+        "order_id": "ORDER-0001",
+        "paid_cents": 25900,
+        "order_status": "paid",
+        "refund_state": "not_requested",
+        "refund_cents": null,
+        "next_step": "submit_request",
+        "tone": "empathetic",
+        "sections": {
+          "payment": "订单ORDER-0001实付259.00元。",
+          "fulfillment": "订单已支付，尚未发货。",
+          "refund": "当前没有退款申请。",
+          "next_step": "如需售后，可提交申请，由平台审核。"
+        }
+      },
+      "best_candidate": {
+        "order_id": "ORDER-0001",
+        "paid_cents": 25900,
+        "order_status": "paid",
+        "refund_state": "not_requested",
+        "refund_cents": null,
+        "next_step": "submit_request",
+        "tone": "empathetic",
+        "sections": {
+          "payment": "订单ORDER-0001实付259.00元。",
+          "fulfillment": "订单已支付，尚未发货。",
+          "refund": "当前没有退款申请。",
+          "next_step": "如需售后，可提交申请，由平台审核。"
+        }
+      },
+      "gate_reports": [
+        {
+          "round_index": 0,
+          "gate_index": 0,
+          "issues": []
+        },
+        {
+          "round_index": 0,
+          "gate_index": 1,
+          "issues": [
+            {
+              "criterion_id": "general",
+              "message": "Structured fact /order_id does not match authoritative source.",
+              "evidence": "Expected 'ORDER-0001'; received 'ORDER-9999'.",
+              "suggestion": "Correct this field and reconcile all user-facing sections with it."
+            }
+          ]
+        },
+        {
+          "round_index": 1,
+          "gate_index": 0,
+          "issues": []
+        },
+        {
+          "round_index": 1,
+          "gate_index": 1,
+          "issues": []
+        }
+      ],
+      "gate_rejected_rounds": 1,
+      "trace": [
+        {
+          "event": "started",
+          "elapsed_ms": 0.31,
+          "details": {
+            "criteria": [
+              "factual_grounding",
+              "refund_status",
+              "next_action",
+              "consistency",
+              "safety"
+            ],
+            "max_repair_rounds": 2,
+            "budget": {
+              "max_model_calls": 5,
+              "max_repair_rounds": 2,
+              "deadline_seconds": 120.0,
+              "min_pass_score": 0.8,
+              "max_observed_tokens": null
+            },
+            "policy": {
+              "score_patience": null,
+              "min_score_gain": 0.01
+            }
+          }
+        },
+        {
+          "event": "call_started",
+          "elapsed_ms": 5.803,
+          "details": {
+            "role": "judge",
+            "model_calls": 1
+          }
+        },
+        {
+          "event": "judged",
+          "elapsed_ms": 14086.25,
+          "details": {
+            "round": 0,
+            "status": "fail",
+            "score": 0.0,
+            "issue_ids": [
+              "factual_grounding",
+              "consistency"
+            ],
+            "provider": "qwen3.5-flash",
+            "total_tokens": 3072
+          }
+        },
+        {
+          "event": "gate_checked",
+          "elapsed_ms": 14086.746,
+          "details": {
+            "gate_index": 0,
+            "issue_count": 0
+          }
+        },
+        {
+          "event": "gate_checked",
+          "elapsed_ms": 14086.992,
+          "details": {
+            "gate_index": 1,
+            "issue_count": 1
+          }
+        },
+        {
+          "event": "decision",
+          "elapsed_ms": 14087.058,
+          "details": {
+            "round": 0,
+            "action": "repair",
+            "reason": "issues_found"
+          }
+        },
+        {
+          "event": "call_started",
+          "elapsed_ms": 14087.063,
+          "details": {
+            "role": "repair",
+            "model_calls": 2
+          }
+        },
+        {
+          "event": "call_finished",
+          "elapsed_ms": 27769.128,
+          "details": {
+            "role": "repair",
+            "provider": "qwen3.5-flash",
+            "total_tokens": 3908
+          }
+        },
+        {
+          "event": "repair_committed",
+          "elapsed_ms": 27769.207,
+          "details": {
+            "round": 1,
+            "candidate_digest": "8032a7bdf17d987d83e36a2e45cb1ee9fcecda56237bbc9c172d6b9d070fe4d4"
+          }
+        },
+        {
+          "event": "call_started",
+          "elapsed_ms": 27769.215,
+          "details": {
+            "role": "judge",
+            "model_calls": 3
+          }
+        },
+        {
+          "event": "judged",
+          "elapsed_ms": 38793.474,
+          "details": {
+            "round": 1,
+            "status": "pass",
+            "score": 1.0,
+            "issue_ids": [],
+            "provider": "qwen3.5-flash",
+            "total_tokens": 3196
+          }
+        },
+        {
+          "event": "gate_checked",
+          "elapsed_ms": 38794.599,
+          "details": {
+            "gate_index": 0,
+            "issue_count": 0
+          }
+        },
+        {
+          "event": "gate_checked",
+          "elapsed_ms": 38795.022,
+          "details": {
+            "gate_index": 1,
+            "issue_count": 0
+          }
+        },
+        {
+          "event": "decision",
+          "elapsed_ms": 38795.152,
+          "details": {
+            "round": 1,
+            "action": "publish",
+            "reason": "judge_passed"
+          }
+        },
+        {
+          "event": "published",
+          "elapsed_ms": 38795.234,
+          "details": {
+            "reason": "judge_passed"
+          }
+        }
+      ],
+      "verdicts": [
+        {
+          "status": "fail",
+          "score": 0.0,
+          "summary": "候选输出存在严重事实错误和字段不一致。订单号与源数据不符，退款金额字段缺失导致无法验证金额一致性，且未提供四段回复文本。",
+          "issues": [
+            {
+              "criterion_id": "factual_grounding",
+              "message": "订单号与源数据不一致。源数据中order.id为ORDER-0001，但候选输出中order_id为ORDER-9999。",
+              "evidence": "Source: order.id='ORDER-0001'; Candidate: order_id='ORDER-9999'",
+              "suggestion": "将order_id修正为ORDER-0001以匹配源数据。"
+            },
+            {
+              "criterion_id": "consistency",
+              "message": "refund_cents字段在候选输出中为null，但根据质量准则要求结构化字段需准确反映退款状态（此处应为0或null需明确对应），且任务要求输出四段回复文本，候选输出仅包含sections对象，缺少独立的四段文本内容。",
+              "evidence": "Candidate refund_cents is null; Task requires 'four paragraphs of reply text' but only sections object provided.",
+              "suggestion": "明确refund_cents数值（若为not_requested可设为0或保持null但需确保逻辑一致），并补充完整的四段用户可见回复文本。"
+            }
+          ]
+        },
+        {
+          "status": "pass",
+          "score": 1.0,
+          "summary": "候选输出完全符合业务上下文和质量准则。订单号、金额、状态与源数据一致；退款状态判定正确（not_requested），金额处理合理（null）；next_step映射准确（submit_request）；四段回复文本内容完整且语气恰当，无事实错误或违规承诺。",
+          "issues": []
+        }
+      ],
+      "issue_ids": [
+        "factual_grounding",
+        "consistency"
+      ]
+    },
+    {
+      "id": "report--orders_up--clean",
+      "scenario": "report",
+      "initial_should_pass": true,
+      "first_judge_status": "pass",
+      "detection_correct": true,
+      "final_correct": true,
+      "status": "passed",
+      "reason": "judge_passed",
+      "repair_rounds": 0,
+      "model_calls": 1,
+      "input_tokens": 1121,
+      "output_tokens": 1087,
+      "output": {
+        "metric_name": "支付订单",
+        "current": 1280,
+        "previous": 1000,
+        "delta": 280,
+        "direction": "up",
+        "change_rate_percent": 28.0,
+        "sentence": "本周支付订单1280笔，上周1000笔，增加280笔，环比上升28.00%。"
+      },
+      "best_candidate": {
+        "metric_name": "支付订单",
+        "current": 1280,
+        "previous": 1000,
+        "delta": 280,
+        "direction": "up",
+        "change_rate_percent": 28.0,
+        "sentence": "本周支付订单1280笔，上周1000笔，增加280笔，环比上升28.00%。"
+      },
+      "gate_reports": [
+        {
+          "round_index": 0,
+          "gate_index": 0,
+          "issues": []
+        },
+        {
+          "round_index": 0,
+          "gate_index": 1,
+          "issues": []
+        }
+      ],
+      "gate_rejected_rounds": 0,
+      "trace": [
+        {
+          "event": "started",
+          "elapsed_ms": 0.181,
+          "details": {
+            "criteria": [
+              "numeric_fidelity",
+              "derivation",
+              "unit_fidelity",
+              "consistency",
+              "restraint"
+            ],
+            "max_repair_rounds": 2,
+            "budget": {
+              "max_model_calls": 5,
+              "max_repair_rounds": 2,
+              "deadline_seconds": 120.0,
+              "min_pass_score": 0.8,
+              "max_observed_tokens": null
+            },
+            "policy": {
+              "score_patience": null,
+              "min_score_gain": 0.01
+            }
+          }
+        },
+        {
+          "event": "call_started",
+          "elapsed_ms": 2.526,
+          "details": {
+            "role": "judge",
+            "model_calls": 1
+          }
+        },
+        {
+          "event": "judged",
+          "elapsed_ms": 10268.051,
+          "details": {
+            "round": 0,
+            "status": "pass",
+            "score": 1.0,
+            "issue_ids": [],
+            "provider": "qwen3.5-flash",
+            "total_tokens": 2208
+          }
+        },
+        {
+          "event": "gate_checked",
+          "elapsed_ms": 10268.571,
+          "details": {
+            "gate_index": 0,
+            "issue_count": 0
+          }
+        },
+        {
+          "event": "gate_checked",
+          "elapsed_ms": 10268.746,
+          "details": {
+            "gate_index": 1,
+            "issue_count": 0
+          }
+        },
+        {
+          "event": "decision",
+          "elapsed_ms": 10268.798,
+          "details": {
+            "round": 0,
+            "action": "publish",
+            "reason": "judge_passed"
+          }
+        },
+        {
+          "event": "published",
+          "elapsed_ms": 10268.861,
+          "details": {
+            "reason": "judge_passed"
+          }
+        }
+      ],
+      "verdicts": [
+        {
+          "status": "pass",
+          "score": 1.0,
+          "summary": "候选输出完全符合业务上下文和所有质量标准。数值准确，计算正确，表述克制且无额外推测。",
+          "issues": []
+        }
+      ],
+      "issue_ids": []
+    },
+    {
+      "id": "report--orders_up--wrong_current",
+      "scenario": "report",
+      "initial_should_pass": false,
+      "first_judge_status": "fail",
+      "detection_correct": true,
+      "final_correct": false,
+      "status": "fallback",
+      "reason": "no_progress",
+      "repair_rounds": 2,
+      "model_calls": 4,
+      "input_tokens": 7299,
+      "output_tokens": 5363,
+      "output": null,
+      "best_candidate": {
+        "metric_name": "支付订单",
+        "current": 1280,
+        "previous": 1000,
+        "delta": 280,
+        "direction": "up",
+        "change_rate_percent": 28.0,
+        "sentence": "本周支付订单1280笔，上周1000笔，增加280笔，环比上升28.00%。"
+      },
+      "gate_reports": [
+        {
+          "round_index": 0,
+          "gate_index": 0,
+          "issues": []
+        },
+        {
+          "round_index": 0,
+          "gate_index": 1,
+          "issues": [
+            {
+              "criterion_id": "general",
+              "message": "Structured report /current is inconsistent with source or calculation.",
+              "evidence": "Expected 1280; received 1297.",
+              "suggestion": "Recompute from the original source and align the sentence with the fields."
+            }
+          ]
+        },
+        {
+          "round_index": 1,
+          "gate_index": 0,
+          "issues": []
+        },
+        {
+          "round_index": 1,
+          "gate_index": 1,
+          "issues": []
+        }
+      ],
+      "gate_rejected_rounds": 1,
+      "trace": [
+        {
+          "event": "started",
+          "elapsed_ms": 0.149,
+          "details": {
+            "criteria": [
+              "numeric_fidelity",
+              "derivation",
+              "unit_fidelity",
+              "consistency",
+              "restraint"
+            ],
+            "max_repair_rounds": 2,
+            "budget": {
+              "max_model_calls": 5,
+              "max_repair_rounds": 2,
+              "deadline_seconds": 120.0,
+              "min_pass_score": 0.8,
+              "max_observed_tokens": null
+            },
+            "policy": {
+              "score_patience": null,
+              "min_score_gain": 0.01
+            }
+          }
+        },
+        {
+          "event": "call_started",
+          "elapsed_ms": 6.473,
+          "details": {
+            "role": "judge",
+            "model_calls": 1
+          }
+        },
+        {
+          "event": "judged",
+          "elapsed_ms": 14865.633,
+          "details": {
+            "round": 0,
+            "status": "fail",
+            "score": 0.4,
+            "issue_ids": [
+              "numeric_fidelity",
+              "derivation",
+              "derivation",
+              "consistency",
+              "consistency",
+              "consistency"
+            ],
+            "provider": "qwen3.5-flash",
+            "total_tokens": 2721
+          }
+        },
+        {
+          "event": "gate_checked",
+          "elapsed_ms": 14865.914,
+          "details": {
+            "gate_index": 0,
+            "issue_count": 0
+          }
+        },
+        {
+          "event": "gate_checked",
+          "elapsed_ms": 14866.087,
+          "details": {
+            "gate_index": 1,
+            "issue_count": 1
+          }
+        },
+        {
+          "event": "decision",
+          "elapsed_ms": 14866.162,
+          "details": {
+            "round": 0,
+            "action": "repair",
+            "reason": "issues_found"
+          }
+        },
+        {
+          "event": "call_started",
+          "elapsed_ms": 14866.173,
+          "details": {
+            "role": "repair",
+            "model_calls": 2
+          }
+        },
+        {
+          "event": "call_finished",
+          "elapsed_ms": 27511.673,
+          "details": {
+            "role": "repair",
+            "provider": "qwen3.5-flash",
+            "total_tokens": 3452
+          }
+        },
+        {
+          "event": "repair_committed",
+          "elapsed_ms": 27511.781,
+          "details": {
+            "round": 1,
+            "candidate_digest": "eb687c8c57fc64bcec32415564195b8afe9b937150cbe2a869cd6f19b1889b98"
+          }
+        },
+        {
+          "event": "call_started",
+          "elapsed_ms": 27511.797,
+          "details": {
+            "role": "judge",
+            "model_calls": 3
+          }
+        },
+        {
+          "event": "judged",
+          "elapsed_ms": 41277.791,
+          "details": {
+            "round": 1,
+            "status": "fail",
+            "score": 0.9,
+            "issue_ids": [
+              "derivation",
+              "consistency"
+            ],
+            "provider": "qwen3.5-flash",
+            "total_tokens": 3063
+          }
+        },
+        {
+          "event": "gate_checked",
+          "elapsed_ms": 41278.234,
+          "details": {
+            "gate_index": 0,
+            "issue_count": 0
+          }
+        },
+        {
+          "event": "gate_checked",
+          "elapsed_ms": 41278.386,
+          "details": {
+            "gate_index": 1,
+            "issue_count": 0
+          }
+        },
+        {
+          "event": "decision",
+          "elapsed_ms": 41278.441,
+          "details": {
+            "round": 1,
+            "action": "repair",
+            "reason": "issues_found"
+          }
+        },
+        {
+          "event": "call_started",
+          "elapsed_ms": 41278.446,
+          "details": {
+            "role": "repair",
+            "model_calls": 4
+          }
+        },
+        {
+          "event": "call_finished",
+          "elapsed_ms": 54432.356,
+          "details": {
+            "role": "repair",
+            "provider": "qwen3.5-flash",
+            "total_tokens": 3426
+          }
+        },
+        {
+          "event": "fallback",
+          "elapsed_ms": 54432.405,
+          "details": {
+            "reason": "no_progress"
+          }
+        }
+      ],
+      "verdicts": [
+        {
+          "status": "fail",
+          "score": 0.4,
+          "summary": "候选输出存在数值错误、计算不一致及格式违规。本期值与源数据不符，导致差值和环比计算错误；JSON中change_rate_percent未保留两位小数精度要求（虽数值等价但sentence需显示两位），且sentence内部数值自相矛盾。",
+          "issues": [
+            {
+              "criterion_id": "numeric_fidelity",
+              "message": "本期值current与source不一致。",
+              "evidence": "source.current=1280，candidate.current=1297",
+              "suggestion": ""
+            },
+            {
+              "criterion_id": "derivation",
+              "message": "delta计算错误且与当前值不匹配。",
+              "evidence": "source: current=1280, previous=1000, delta应为280; candidate.delta=280 (基于错误的current 1297计算得出1297-1000=297? 实际candidate delta=280与candidate current=1297也不符，1297-1000=297)。正确delta应为280。",
+              "suggestion": ""
+            },
+            {
+              "criterion_id": "derivation",
+              "message": "change_rate_percent在JSON中未体现两位小数精度（虽数值等价，但任务要求按两位小数精度取值，且sentence必须显示两位）。",
+              "evidence": "source: previous=1000, delta=280, change_rate=28.00%; candidate.change_rate_percent=28.0",
+              "suggestion": ""
+            },
+            {
+              "criterion_id": "consistency",
+              "message": "sentence中的本期值与结构化字段current不一致。",
+              "evidence": "sentence='...本周支付订单1280笔...', candidate.current=1297",
+              "suggestion": ""
+            },
+            {
+              "criterion_id": "consistency",
+              "message": "sentence中的差值与结构化字段delta不一致。",
+              "evidence": "sentence='...增加280笔...', candidate.delta=280 (此处一致，但基于错误的current推导)",
+              "suggestion": ""
+            },
+            {
+              "criterion_id": "consistency",
+              "message": "sentence中的本期值与source不一致。",
+              "evidence": "sentence='...本周支付订单1280笔...' (正确), 但candidate.current=1297 (错误)",
+              "suggestion": ""
+            }
+          ]
+        },
+        {
+          "status": "fail",
+          "score": 0.9,
+          "summary": "候选输出在数值精度和格式上存在违规。JSON字段change_rate_percent未保留两位小数（28.0而非28.00），且sentence中百分比显示为28.00%与任务要求的'按两位小数精度取值'及'JSON数字不要求保留末尾的0但sentence必须显示两位'存在逻辑冲突，需修正JSON数值以匹配精度要求或调整sentence表述。",
+          "issues": [
+            {
+              "criterion_id": "derivation",
+              "message": "JSON字段change_rate_percent未按两位小数精度取值。",
+              "evidence": "source: previous=1000, delta=280, change_rate应为28.00; candidate.change_rate_percent=28.0",
+              "suggestion": "将candidate.change_rate_percent修改为28.00。"
+            },
+            {
+              "criterion_id": "consistency",
+              "message": "sentence中的百分比格式与任务要求的'显示两位'一致，但JSON数值精度不一致导致整体规范不符。",
+              "evidence": "sentence='...环比上升28.00%' (正确), candidate.change_rate_percent=28.0 (错误)",
+              "suggestion": "统一JSON数值为28.00以符合精度要求。"
+            }
+          ]
+        }
+      ],
+      "issue_ids": [
+        "numeric_fidelity",
+        "derivation",
+        "derivation",
+        "consistency",
+        "consistency",
+        "consistency",
+        "derivation",
+        "consistency"
+      ]
+    }
+  ]
+}

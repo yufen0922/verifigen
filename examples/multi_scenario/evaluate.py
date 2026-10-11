@@ -24,9 +24,11 @@ from verifigen import (
     QualityTask,
     make_qwen3_8b_stack,
 )
+from verifigen.config import ModelSettings
 from verifigen.domains.rag_review import CitationGate, make_rag_task
-from verifigen.domains.report_review import make_report_task
-from verifigen.domains.support_review import make_support_task
+from verifigen.domains.report_review import ReportFactsGate, make_report_task
+from verifigen.domains.support_review import SupportFactsGate, make_support_task
+from verifigen.metrics import detection_correct, detection_metrics
 from verifigen.rag_eval import score_rag_output
 from verifigen.retrieval import BM25Retriever
 from verifigen.scenario_eval import inspect_report_output, inspect_support_output
@@ -112,7 +114,8 @@ async def execute(args: argparse.Namespace) -> int:
 
     stack = None
     if args.mode == "qwen":
-        api_key = os.environ.get("DASHSCOPE_API_KEY")
+        settings = ModelSettings.from_env(ROOT / ".env.local")
+        api_key = settings.api_key
         if not api_key:
             raise ValueError("Set DASHSCOPE_API_KEY before running --mode qwen")
         stack = make_qwen3_8b_stack(
@@ -120,7 +123,7 @@ async def execute(args: argparse.Namespace) -> int:
             base_url=os.environ.get(
                 "DASHSCOPE_BASE_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1"
             ),
-            model=os.environ.get("DASHSCOPE_MODEL", "qwen3-8b"),
+            model=settings.model,
             thinking_budget=args.thinking_budget,
         )
 
@@ -146,7 +149,15 @@ async def execute(args: argparse.Namespace) -> int:
                 repairer=repairer,
                 budget=budget,
                 policy=policy,
-                gates=(CitationGate(),) if args.citation_gate and scenario == "rag" else (),
+                gates=(
+                    *((CitationGate(),) if args.citation_gate and scenario == "rag" else ()),
+                    *(
+                        (SupportFactsGate(),)
+                        if args.business_gates and scenario == "support"
+                        else ()
+                    ),
+                    *((ReportFactsGate(),) if args.business_gates and scenario == "report" else ()),
+                ),
             ).run(task, initial=case["initial"])
             first_status = result.verdicts[0].status if result.verdicts else "error"
             final_correct = not inspect(result.output, case)
@@ -156,7 +167,7 @@ async def execute(args: argparse.Namespace) -> int:
                 "scenario": scenario,
                 "initial_should_pass": case["initial_should_pass"],
                 "first_judge_status": first_status,
-                "detection_correct": (first_status == "pass") == case["initial_should_pass"],
+                "detection_correct": detection_correct(first_status, case["initial_should_pass"]),
                 "final_correct": final_correct,
                 "status": result.status,
                 "reason": result.reason,
@@ -207,6 +218,7 @@ async def execute(args: argparse.Namespace) -> int:
         bad = [row for row in rows if not row["initial_should_pass"]]
         published = [row for row in rows if row["status"] == "passed"]
         per_scenario[scenario] = {
+            **detection_metrics(rows),
             "cases": len(rows),
             "initial_pass_rate": sum(row["initial_should_pass"] for row in rows) / len(rows),
             "judge_detection_accuracy": sum(row["detection_correct"] for row in rows) / len(rows),
@@ -235,6 +247,7 @@ async def execute(args: argparse.Namespace) -> int:
             "policy": asdict(policy),
             "schema_gate": True,
             "rag_citation_gate": args.citation_gate,
+            "business_facts_gates": args.business_gates,
         },
         "dataset_sha256": {
             name: hashlib.sha256(PATHS[name].read_bytes()).hexdigest() for name in selected
@@ -251,6 +264,7 @@ async def execute(args: argparse.Namespace) -> int:
         ),
         "cases": len(records),
         "overall": {
+            **detection_metrics(records),
             "judge_detection_accuracy": sum(record["detection_correct"] for record in records)
             / len(records),
             "bad_case_repair_success": sum(record["final_correct"] for record in bad) / len(bad)
@@ -305,6 +319,11 @@ def main() -> None:
         help="Add RAG citation checks for a gate ablation experiment",
     )
     parser.add_argument("--score-patience", type=int, default=None)
+    parser.add_argument(
+        "--business-gates",
+        action="store_true",
+        help="Check structured support facts and report arithmetic in addition to semantic judgments",
+    )
     parser.add_argument("--output", type=Path, default=Path("runs/multi-scenario-eval.json"))
     args = parser.parse_args()
     if args.limit_per_scenario <= 0 or args.thinking_budget <= 0 or args.concurrency <= 0:

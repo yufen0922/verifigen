@@ -47,12 +47,13 @@ See the [architecture and decision table](docs/architecture.md) and the
 
 ## Model adapter
 
-The live examples use Alibaba Cloud Bailian's OpenAI-compatible API and default to `qwen3-8b`
+The live examples and workbench use Alibaba Cloud Bailian's OpenAI-compatible API and default to `qwen3.5-flash`
 with thinking enabled:
 
 ```python
 stack = make_qwen3_8b_stack(
     api_key=os.environ["DASHSCOPE_API_KEY"],
+    model="qwen3.5-flash",
     thinking_budget=2048,
 )
 loop = QualityLoop(
@@ -67,6 +68,26 @@ configured independently. API keys are accepted only through runtime arguments o
 variables and are never written to source files or quality traces.
 
 ## Quick start
+
+### Live Workbench
+
+```bash
+uv sync --locked --extra web
+# Set DASHSCOPE_API_KEY in your shell or ignored .env.local.
+uv run --locked --extra web verifigen doctor --live
+uv run --locked --extra web verifigen-web --port 8765
+```
+
+Open **http://127.0.0.1:8765** for editable evidence, drafts, criteria and budgets, live round
+feedback, candidate comparisons, cancellation, history and actual evaluation records.
+No mock fallback mode is substituted for an unavailable model. See [workbench/API details](docs/workbench.md).
+
+![Live workbench: a real Qwen repair and re-judgment](docs/assets/workbench-live.png)
+
+The legacy factory name `make_qwen3_8b_stack` remains compatible; pass `model` explicitly in SDK
+code. Live CLI examples load `.env.local` and default to Flash; environment variables take priority.
+
+### Control-Flow Replay
 
 Run the deterministic replay first to inspect the Judge -> Repair -> re-Judge control flow without
 an API key:
@@ -109,8 +130,11 @@ The project also uses [RAGTruth](https://github.com/ParticleMedia/RAGTruth) as a
 benchmark. The first fixed cohort contains 600 responses: 200 each for QA, summarization, and
 data-to-text, balanced between actionable hallucination labels and clean responses. The 180-case
 development split and 420-case evaluation split are isolated by `source_id`. Data validation and
-deterministic selection are complete; full Qwen runs and post-repair blind-review metrics for these
-600 cases are not published yet. The 73.46% result above belongs only to the synthetic suite. See
+deterministic selection are complete. All **420 held-out cases** have now been run with Qwen:
+**958 calls**, **78.57% first-Judge accuracy**, **85.71% hallucination recall**, and **27.62% clean
+false-alarm rate**. [Full results and limitations](benchmarks/results/ragtruth-qwen3.5-flash/report.md).
+Post-repair independent review remains pending; no public-data repair success rate is claimed.
+The 73.46% result above belongs only to the synthetic suite. See
 the [RAGTruth evaluation protocol](docs/ragtruth_evaluation.md).
 
 ## Evaluation
@@ -151,7 +175,7 @@ from verifigen import Criterion, QualityLoop, QualityTask, make_qwen3_8b_stack
 
 
 async def main():
-    stack = make_qwen3_8b_stack(api_key=os.environ["DASHSCOPE_API_KEY"])
+    stack = make_qwen3_8b_stack(api_key=os.environ["DASHSCOPE_API_KEY"], model="qwen3.5-flash")
     task = QualityTask(
         source={"order": {"paid": 799, "status": "shipped"}},
         prompt="Tell the customer the paid amount and shipping status.",

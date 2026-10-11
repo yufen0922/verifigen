@@ -1,4 +1,10 @@
-.PHONY: demo test quality benchmark build
+.PHONY: demo test quality benchmark build serve doctor
+
+serve:
+	verifigen-web --port 8765
+
+doctor:
+	verifigen doctor
 
 demo:
 	python -m verifigen.cli demo

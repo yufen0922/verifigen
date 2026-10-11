@@ -44,11 +44,12 @@ Harness 的职责；导出的 `Harness` 类是 v0.1 兼容接口。
 
 ## 现在使用的模型
 
-真实示例默认使用百炼 `qwen3-8b`，并启用思考：
+真实示例默认使用百炼 `qwen3.5-flash`，并启用思考：
 
 ```python
 stack = make_qwen3_8b_stack(
     api_key=os.environ["DASHSCOPE_API_KEY"],
+    model="qwen3.5-flash",
     thinking_budget=2048,
 )
 loop = QualityLoop(
@@ -58,10 +59,30 @@ loop = QualityLoop(
 )
 ```
 
-三个角色使用独立适配器，当前默认是同一个 Qwen3-8B 模型，后续可以分别换成不同模型。
+三个角色使用独立适配器，真实示例和网页默认使用 Qwen3.5-Flash，也可以分别配置不同模型。
 API Key 只从环境变量读取，不写入代码、配置示例或运行 Trace。
 
 ## 快速运行
+
+### 真实模型工作台
+
+```bash
+uv sync --locked --extra web
+# 在当前终端或被 Git 忽略的 .env.local 中设置 DASHSCOPE_API_KEY。
+uv run --locked --extra web verifigen doctor --live
+uv run --locked --extra web verifigen-web --port 8765
+```
+
+打开 **http://127.0.0.1:8765**，可修改证据、初稿、规则与预算，观察实时判定、修复前后差异、
+终止原因，并查看历史运行和真实评测记录。模型不可用时明确报错，不切换成假模型演示。
+详见[工作台与 API](docs/workbench.md)。
+
+![真实 Qwen 运行：事实与引用错误被修复，复检后发布](docs/assets/workbench-live.png)
+
+兼容工厂 `make_qwen3_8b_stack` 保留旧名称；SDK 调用可显式传入 `model="qwen3.5-flash"`。
+真实 CLI 和网页会加载本地 `.env.local`，环境变量优先。
+
+### 控制流回放
 
 先运行无需 Key 的固定回放，确认 Judge → Repair → 再 Judge 的控制流程：
 
@@ -80,7 +101,7 @@ export DASHSCOPE_API_KEY="在当前终端设置，不要写入仓库"
 python examples/rag_qa/run_qwen.py
 ```
 
-要强制输入一个带有错误事实和伪造引用的初稿，直接观察 Qwen3-8B 的校对与修复：
+要强制输入一个带有错误事实和伪造引用的初稿，直接观察真实 Qwen 的校对与修复：
 
 ```bash
 python examples/rag_qa/run_qwen.py --repair-demo --output runs/rag-repair.json
@@ -98,8 +119,10 @@ thinking budget、样本分布和独立 oracle 一起解释，不能把离线回
 项目同时已使用 [RAGTruth](https://github.com/ParticleMedia/RAGTruth) 构建第一阶段 600 条公开评测集：
 QA、摘要、数据转文本各 200 条，每类包含 100 条有效幻觉样本和 100 条正常样本；开发集 180 条、
 评测集 420 条，并按 `source_id` 隔离原始材料。RAGTruth 官方语料包含 2,965 个原始材料、17,790 条
-模型回答和词级人工幻觉标注。当前已完成数据核验与固定抽样，尚未发布这 600 条上的 Qwen 完整运行
-和修复后盲审指标；上面的 73.46% 仅属于 180 条合成集。详见
+模型回答和词级人工幻觉标注。现已完成全部 **420 条独立评测样本的真实 Qwen 运行、958 次调用**：
+首轮判断准确率 **78.57%**、幻觉检出召回率 **85.71%**、正常回答误杀率 **27.62%**。
+[完整报告与逐条记录](benchmarks/results/ragtruth-qwen3.5-flash/report.md)已公开。
+修复后独立盲审尚未完成，不能将 Judge 自评通过当成修复正确；上面的 73.46% 仅属于合成集。详见
 [RAGTruth 评测协议](docs/ragtruth_evaluation.md)。
 
 单场景 RAG 评测使用确定性生成的 60 条样本：
@@ -135,7 +158,7 @@ from verifigen import Criterion, QualityLoop, QualityTask, make_qwen3_8b_stack
 
 
 async def main():
-    stack = make_qwen3_8b_stack(api_key=os.environ["DASHSCOPE_API_KEY"])
+    stack = make_qwen3_8b_stack(api_key=os.environ["DASHSCOPE_API_KEY"], model="qwen3.5-flash")
     task = QualityTask(
         source={"order": {"paid": 799, "status": "shipped"}},
         prompt="向用户说明订单金额和状态。",

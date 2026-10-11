@@ -1,0 +1,25 @@
+{
+  "seed": "verifigen-ragtruth-600-v1",
+  "cases": 600,
+  "unique_sources": 451,
+  "selection_sha256": "23a96e2e5496200d3fbc031e16a5942d4c5f26ebf7ca62f4901e783ea6e9840e",
+  "samples_sha256": "1e702106e17142e25c034e7dc72d5bbcbe38e7ac6ae1a42297f7a20362624bcc",
+  "upstream_sha256": {
+    "responses": "e4c2e4ac24fff676d8984cc61c35d791612fadc58015335d97dd632375e18073",
+    "sources": "0dffc26ea9f3c1c3d7c7e8336b56ef1646e3cec876edffcca3c9c624d12d578b"
+  },
+  "distribution": {
+    "Summary|dev|bad": 30,
+    "Summary|eval|bad": 70,
+    "Summary|dev|clean": 30,
+    "Summary|eval|clean": 70,
+    "Data2txt|eval|bad": 70,
+    "Data2txt|eval|clean": 70,
+    "Data2txt|dev|bad": 30,
+    "Data2txt|dev|clean": 30,
+    "QA|dev|bad": 30,
+    "QA|eval|bad": 70,
+    "QA|dev|clean": 30,
+    "QA|eval|clean": 70
+  }
+}

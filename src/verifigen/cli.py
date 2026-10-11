@@ -11,6 +11,7 @@ from typing import Any
 
 from .agents import ReplayJudge, ReplayRepairer
 from .benchmark import run_benchmark
+from .config import ModelSettings
 from .domains.support import demo_bad_draft, demo_source, make_support_contract
 from .generators import CompatibleChatGenerator
 from .quality import QualityLoop, write_quality_trace
@@ -37,6 +38,41 @@ def read_json(path: str) -> Any:
 
 
 async def execute(args: argparse.Namespace) -> int:
+    if args.command == "doctor":
+        settings = ModelSettings.from_env(args.env_file)
+        diagnostics = {
+            "model": settings.model,
+            "api_key_configured": bool(settings.api_key),
+            "live_checked": False,
+        }
+        if args.live:
+            from .types import GenerationRequest
+
+            try:
+                generation = await settings.stack().generator.generate(
+                    GenerationRequest(
+                        source={"amount": 799},
+                        prompt="Return answer as the exact source amount string.",
+                        output_schema={
+                            "type": "object",
+                            "properties": {"answer": {"type": "string"}},
+                            "required": ["answer"],
+                        },
+                        instructions="Return JSON only.",
+                    )
+                )
+                diagnostics.update(
+                    live_checked=True,
+                    provider=generation.provider,
+                    total_tokens=generation.usage.total_tokens,
+                    valid_response=generation.content == {"answer": "799"},
+                )
+            except Exception:
+                diagnostics.update(live_checked=True, error="provider_or_configuration_error")
+                print(json.dumps(diagnostics, ensure_ascii=False, indent=2))
+                return 2
+        print(json.dumps(diagnostics, ensure_ascii=False, indent=2))
+        return 0 if diagnostics.get("valid_response", bool(settings.api_key)) else 2
     if args.command == "benchmark":
         if args.live and args.limit is None:
             raise ValueError("Live evaluation requires an explicit --limit to bound requests")
@@ -155,6 +191,11 @@ def main() -> None:
     )
     parser.add_argument("--version", action="version", version="verifigen 0.2.0")
     commands = parser.add_subparsers(dest="command", required=True)
+    doctor = commands.add_parser(
+        "doctor", help="Check local model configuration without exposing credentials"
+    )
+    doctor.add_argument("--env-file", type=Path, default=Path.cwd() / ".env.local")
+    doctor.add_argument("--live", action="store_true", help="Make one bounded real provider call")
     for name, help_text in (
         ("demo", "Replay a Judge -> Repair -> re-Judge loop without an API key"),
         ("check", "Run the v0.1 deterministic compatibility checker"),

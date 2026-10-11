@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from verifigen import QualityBudget, QualityLoop, QualityPolicy, make_qwen3_8b_stack
+from verifigen.config import ModelSettings
 from verifigen.domains.rag_review import CitationGate, make_rag_task
 from verifigen.retrieval import BM25Retriever, SearchHit
 
@@ -44,7 +45,8 @@ def make_source(question: str, category: str, hits: tuple[SearchHit, ...]) -> di
 
 
 async def execute(args: argparse.Namespace) -> int:
-    api_key = os.environ.get("DASHSCOPE_API_KEY")
+    settings = ModelSettings.from_env(DEFAULT_CORPUS.parents[2] / ".env.local")
+    api_key = settings.api_key
     if not api_key:
         raise ValueError("Set DASHSCOPE_API_KEY in the current shell; never commit it")
     hits = BM25Retriever(load_documents(args.corpus)).search(
@@ -63,7 +65,7 @@ async def execute(args: argparse.Namespace) -> int:
         base_url=os.environ.get(
             "DASHSCOPE_BASE_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1"
         ),
-        model=os.environ.get("DASHSCOPE_MODEL", "qwen3-8b"),
+        model=settings.model,
         thinking_budget=args.thinking_budget,
         timeout=args.timeout,
     )
