@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Literal
 
 from dotenv import load_dotenv
 
@@ -36,6 +37,7 @@ class ModelSettings:
         enable_thinking: bool = False,
         validate_judge_quotes: bool = False,
         judge_model: str | None = None,
+        judge_strategy: Literal["verdict", "claims"] = "verdict",
     ) -> Qwen3Stack:
         if not self.api_key:
             raise ValueError("Set DASHSCOPE_API_KEY or configure the ignored .env.local file")
@@ -47,4 +49,5 @@ class ModelSettings:
             enable_thinking=enable_thinking,
             validate_judge_quotes=validate_judge_quotes,
             judge_model=judge_model,
+            judge_strategy=judge_strategy,
         )

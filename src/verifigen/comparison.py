@@ -22,7 +22,7 @@ from .generators import Generator, ProviderError
 from .jsonutil import digest, json_copy
 from .quality import QualityLoop
 from .ragtruth import TASKS, make_ragtruth_task
-from .review import QualityBudget
+from .review import Criterion, QualityBudget
 from .types import GenerationRequest, Usage
 
 ARMS = ("direct", "judge_only", "self_refine", "quality_loop")
@@ -111,10 +111,28 @@ async def run_arm(
     *,
     judge_history: Literal["full", "none"] = "full",
     max_protocol_retries: int = 1,
+    refinement_mode: Literal["edit", "source_first"] = "edit",
+    check_fulfillment: bool = False,
 ) -> dict[str, Any]:
     if arm not in OPTIMIZED_ARMS:
         raise ValueError("Unknown comparison arm")
     task = make_ragtruth_task(sample)
+    if check_fulfillment:
+        task = replace(
+            task,
+            instructions=task.instructions.replace(
+                "Evaluate factual grounding only.", "Evaluate all supplied explicit criteria."
+            ),
+            criteria=(
+                *task.criteria,
+                Criterion(
+                    "fulfillment",
+                    "Substantively answer the original task using source evidence. "
+                    "Do not remove the essential answer or replace it with a generic placeholder. "
+                    "Respect explicit task constraints without requiring every source detail.",
+                ),
+            ),
+        )
     initial = {"answer": sample["response"]}
     started = time.monotonic()
     calls = 0
@@ -127,6 +145,7 @@ async def run_arm(
             judge_history=judge_history,
             max_protocol_retries=max_protocol_retries,
             initial_refiner=stack.generator if arm == "refine_verify" else None,
+            refinement_mode=refinement_mode,
         ).run(task, initial=initial)
         data = result.to_dict()
         output, status, reason = data["output"], data["status"], data["reason"]

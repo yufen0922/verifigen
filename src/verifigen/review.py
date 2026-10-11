@@ -114,10 +114,20 @@ class RepairRequest:
 
 
 @dataclass(frozen=True)
+class EvidenceAssessment:
+    kind: Literal["claim", "criterion"]
+    criterion_id: str
+    statement: str
+    status: Literal["pass", "fail", "unknown"]
+    evidence: str
+
+
+@dataclass(frozen=True)
 class JudgeResponse:
     verdict: JudgeVerdict
     usage: Usage = field(default_factory=Usage)
     provider: str = "custom"
+    assessments: tuple[EvidenceAssessment, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -171,6 +181,7 @@ class QualityRound:
     candidate: Any
     verdict: JudgeVerdict
     effective_verdict: JudgeVerdict
+    assessments: tuple[EvidenceAssessment, ...] = ()
 
 
 @dataclass(frozen=True)

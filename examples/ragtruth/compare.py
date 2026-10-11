@@ -47,6 +47,7 @@ async def evaluate(args: argparse.Namespace) -> dict[str, Any]:
         enable_thinking=args.enable_thinking,
         validate_judge_quotes=args.validate_judge_quotes,
         judge_model=args.judge_model,
+        judge_strategy=args.judge_strategy,
     )
     reviewer = CompatibleChatGenerator(
         base_url=settings.base_url,
@@ -83,6 +84,7 @@ async def evaluate(args: argparse.Namespace) -> dict[str, Any]:
         "gates.py",
         "ragtruth.py",
         "config.py",
+        "evidence_judge.py",
     )
     config = {
         "protocol": PROTOCOL,
@@ -96,6 +98,9 @@ async def evaluate(args: argparse.Namespace) -> dict[str, Any]:
         "thinking_budget": args.thinking_budget,
         "enable_thinking": args.enable_thinking,
         "judge_model": stack.judge.generator.model,
+        "judge_strategy": args.judge_strategy,
+        "refinement_mode": args.refinement_mode,
+        "check_fulfillment": args.check_fulfillment,
         "temperature": 0,
         "max_output_tokens": 4096,
         "budget_ceiling": asdict(budget),
@@ -142,6 +147,8 @@ async def evaluate(args: argparse.Namespace) -> dict[str, Any]:
                 budget,
                 judge_history=args.judge_history,
                 max_protocol_retries=args.max_protocol_retries,
+                refinement_mode=args.refinement_mode,
+                check_fulfillment=args.check_fulfillment,
             )
 
     async def collect(tasks: list[asyncio.Task[Any]], path: Path, rows: list[Any]) -> None:
@@ -217,6 +224,9 @@ def main() -> None:
     parser.add_argument("--enable-thinking", action="store_true")
     parser.add_argument("--validate-judge-quotes", action="store_true")
     parser.add_argument("--judge-model")
+    parser.add_argument("--judge-strategy", choices=("verdict", "claims"), default="verdict")
+    parser.add_argument("--refinement-mode", choices=("edit", "source_first"), default="edit")
+    parser.add_argument("--check-fulfillment", action="store_true")
     args = parser.parse_args()
     if not 1 <= args.concurrency <= 16 or args.thinking_budget < 1:
         parser.error("Use concurrency 1..16 and a positive thinking budget")

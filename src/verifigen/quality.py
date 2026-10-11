@@ -12,11 +12,13 @@ from pathlib import Path
 from typing import Any, Literal
 
 from .agents import SELF_REFINE_INSTRUCTIONS, AgentResponseError, Judge, Repairer
+from .evidence_judge import SOURCE_FIRST_INSTRUCTIONS
 from .gates import CandidateGate, SchemaGate
 from .generators import Generator, ProviderError
 from .jsonutil import digest, json_copy
 from .policy import QualityPolicy
 from .review import (
+    EvidenceAssessment,
     GateReport,
     JudgeIssue,
     JudgeRequest,
@@ -48,9 +50,12 @@ class QualityLoop:
         judge_history: Literal["full", "none"] = "full",
         initial_refiner: Generator | None = None,
         max_protocol_retries: int = 1,
+        refinement_mode: Literal["edit", "source_first"] = "edit",
     ) -> None:
         if judge_history not in ("full", "none"):
             raise ValueError("judge_history must be full or none")
+        if refinement_mode not in ("edit", "source_first"):
+            raise ValueError("refinement_mode must be edit or source_first")
         if type(max_protocol_retries) is not int or not 0 <= max_protocol_retries <= 1:
             raise ValueError("max_protocol_retries must be 0 or 1")
         self.judge = judge
@@ -62,6 +67,7 @@ class QualityLoop:
         self.judge_history = judge_history
         self.initial_refiner = initial_refiner
         self.max_protocol_retries = max_protocol_retries
+        self.refinement_mode = refinement_mode
 
     async def run(
         self,
@@ -90,6 +96,7 @@ class QualityLoop:
         repair_rounds = 0
         best_candidate: Any | None = None
         best_score = -1.0
+        assessments: tuple[EvidenceAssessment, ...] = ()
 
         def task_snapshot() -> QualityTask:
             # A frozen dataclass does not freeze nested dicts exposed to adapters.
@@ -270,7 +277,7 @@ class QualityLoop:
             return json_copy(generated.content)
 
         async def judge(candidate: Any, round_index: int) -> JudgeVerdict:
-            nonlocal best_candidate, best_score
+            nonlocal best_candidate, best_score, assessments
             response = await invoke(
                 self.judge,
                 "judge",
@@ -285,6 +292,7 @@ class QualityLoop:
                 ),
             )
             verdicts.append(response.verdict)
+            assessments = response.assessments
             if response.verdict.score > best_score:
                 best_score = response.verdict.score
                 best_candidate = json_copy(candidate)
@@ -333,6 +341,7 @@ class QualityLoop:
                 judge_history=self.judge_history,
                 initial_refinement=self.initial_refiner is not None,
                 max_protocol_retries=self.max_protocol_retries,
+                refinement_mode=self.refinement_mode,
             )
             try:
                 gates = (SchemaGate(task.output_schema), *self.gates)
@@ -361,7 +370,13 @@ class QualityLoop:
                                 source=json_copy(task.source),
                                 prompt=task.prompt,
                                 output_schema=json_copy(task.output_schema),
-                                instructions=SELF_REFINE_INSTRUCTIONS + "\n" + task.instructions,
+                                instructions=(
+                                    SOURCE_FIRST_INSTRUCTIONS
+                                    if self.refinement_mode == "source_first"
+                                    else SELF_REFINE_INSTRUCTIONS
+                                )
+                                + "\n"
+                                + task.instructions,
                                 previous=json_copy(candidate),
                             )
                         ),
@@ -421,7 +436,7 @@ class QualityLoop:
                         )
                 feedback_history.append(effective_verdict)
                 reviewed = QualityRound(
-                    repair_rounds, json_copy(candidate), verdict, effective_verdict
+                    repair_rounds, json_copy(candidate), verdict, effective_verdict, assessments
                 )
                 rounds.append(reviewed)
                 observe("round_complete", **asdict(reviewed))

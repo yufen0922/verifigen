@@ -402,10 +402,15 @@ def make_qwen3_8b_stack(
     validate_judge_quotes: bool = False,
     enable_thinking: bool = True,
     judge_model: str | None = None,
+    judge_strategy: Literal["verdict", "claims"] = "verdict",
 ) -> Qwen3Stack:
     """Build generation, judge and repair roles on Bailian's Qwen3-8B endpoint."""
     if thinking_budget <= 0:
         raise ValueError("thinking_budget must be positive")
+    if judge_strategy not in ("verdict", "claims"):
+        raise ValueError("judge_strategy must be verdict or claims")
+    if judge_strategy == "claims" and validate_judge_quotes:
+        raise ValueError("Literal quote validation belongs to the verdict strategy only")
 
     def adapter(role_model: str | None = None) -> CompatibleChatGenerator:
         return CompatibleChatGenerator(
@@ -422,9 +427,13 @@ def make_qwen3_8b_stack(
         )
 
     generation_model = adapter()
+    from .evidence_judge import EvidenceJudge
+
     return Qwen3Stack(
         generation_model,
-        LLMJudge(adapter(judge_model), validate_quotes=validate_judge_quotes),
+        EvidenceJudge(adapter(judge_model))
+        if judge_strategy == "claims"
+        else LLMJudge(adapter(judge_model), validate_quotes=validate_judge_quotes),
         LLMRepairer(adapter()),
     )
 

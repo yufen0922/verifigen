@@ -12,6 +12,7 @@ from .agents import (
     make_qwen3_8b_stack,
 )
 from .contract import Contract
+from .evidence_judge import EvidenceJudge
 from .gates import CandidateGate, SchemaGate
 from .generators import CompatibleChatGenerator, FunctionGenerator, ReplayGenerator
 from .policy import LoopDecision, QualityPolicy
@@ -40,6 +41,7 @@ __all__ = [
     "Contract",
     "Criterion",
     "EvidenceUnavailable",
+    "EvidenceJudge",
     "FactVerifier",
     "FieldVerifier",
     "FunctionJudge",
