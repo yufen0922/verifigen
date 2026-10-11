@@ -30,6 +30,11 @@ jobs:
       - run: uv run --locked --extra dev mypy
       - name: Audit published paired evaluation
         run: uv run --locked --extra dev python scripts/audit_comparison.py
+      - name: Audit optimization experiments
+        run: |
+          for results in benchmarks/results/ragtruth-optimized-dev-30 benchmarks/results/ragtruth-quoted-dev-30 benchmarks/results/ragtruth-json-dev-30 benchmarks/results/ragtruth-plus-judge-dev-30 benchmarks/results/ragtruth-optimized-eval-60; do
+            uv run --locked --extra dev python scripts/audit_comparison.py --results "$results"
+          done
       - run: uv run --locked --extra dev pytest --cov=verifigen --cov-fail-under=85
       - name: Rebuild annotated fixtures
         run: |

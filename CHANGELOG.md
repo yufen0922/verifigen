@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- Add charged evidence-first refinement, separate Judge model configuration and corrective,
+  budgeted protocol retries; retain known failed-call usage and explicit provider categories.
+- Use non-thinking JSON mode in configured live examples/workbench; keep thinking opt-in and
+  literal-quotation validation experimental. Isolate quotation fields from the plain Judge schema.
+- Publish four 30-case development diagnostics and a source-disjoint 60-case validation (2,000
+  runtime/review calls). Self-refinement still leads on useful proxy yield/cost; do not claim
+  human-confirmed loop superiority. Expose failed experiments and configurations in the workbench.
+- Audit release-candidate identity, call/revision accounting, anonymous packets and duplicate
+  review records; test tampered artifacts and add all optimization audits to CI.
+
 - Add paired real-model RAGTruth baselines, anonymous cross-model proxy review, development-only
   threshold diagnostics and dual-human-review/adjudication tooling; preserve unfavorable results.
 - Support optional history-hidden re-judgment while preserving repair feedback and audit history.

@@ -843,6 +843,14 @@ footer a {
   .comparison .section-title {
     align-items: flex-start;
   }
+  #baselines-view > .section-title:first-child {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 8px;
+  }
+  #baseline-experiment {
+    width: 100%;
+  }
   #compare-round {
     max-width: 190px;
     font-size: 12px;

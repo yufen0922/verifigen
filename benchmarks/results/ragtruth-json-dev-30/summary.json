@@ -1,0 +1,238 @@
+{
+  "config": {
+    "protocol": "ragtruth-paired-v1",
+    "model": "qwen3.5-flash",
+    "reviewer_model": "qwen-plus",
+    "provider_base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "provider_snapshot": "Alias; upstream exact weights/version may change.",
+    "samples_sha256": "1e702106e17142e25c034e7dc72d5bbcbe38e7ac6ae1a42297f7a20362624bcc",
+    "selected_case_ids": [
+      "76",
+      "849",
+      "1524",
+      "1541",
+      "3931",
+      "3987",
+      "4148",
+      "4986",
+      "5044",
+      "5613",
+      "5798",
+      "5839",
+      "6269",
+      "8820",
+      "9144",
+      "9512",
+      "9722",
+      "9754",
+      "9813",
+      "10171",
+      "12303",
+      "12409",
+      "12776",
+      "12837",
+      "12856",
+      "13396",
+      "13854",
+      "14561",
+      "16286",
+      "17298"
+    ],
+    "per_task": 10,
+    "thinking_budget": 1024,
+    "enable_thinking": false,
+    "judge_model": "qwen3.5-flash",
+    "temperature": 0,
+    "max_output_tokens": 4096,
+    "budget_ceiling": {
+      "max_model_calls": 5,
+      "max_repair_rounds": 2,
+      "deadline_seconds": 120,
+      "min_pass_score": 0.8,
+      "max_observed_tokens": 24000
+    },
+    "arms": [
+      "direct",
+      "judge_only",
+      "self_refine",
+      "quality_loop",
+      "refine_verify"
+    ],
+    "split": "dev",
+    "excluded_sources": [],
+    "judge_history": "none",
+    "max_protocol_retries": 1,
+    "validate_judge_quotes": false,
+    "refine_verify_initial_edits": 1,
+    "self_refine_rounds": 2,
+    "concurrency": 6,
+    "prompt_hashes": {
+      "self_refine": "24f4e9944b301339e513dc8a66fc2df2f6fa3edb21e69cac80c1811eed5df486",
+      "review": "879fedb0832c2b0862f4c0503fc19f5bbe36434f2720f613550a4ba670405c75"
+    },
+    "runtime_sha256": {
+      "comparison.py": "d993a2a11e20ea1c470c96d65cc292a64e8bbc37d5ff15d79b7bd0dc5252294f",
+      "agents.py": "c3c5e5aa3cfb797ff2f31dabb80d1148b115cd5be87542233b6168076a717b2e",
+      "generators.py": "ad16d4c5fab5339556af4e0dd752dd364e1bc278a65f728e6252c4e59f62b190",
+      "quality.py": "496ed65fe7c711cd0a403506edd721902847ba71b998f56031100755d49c8b85",
+      "review.py": "cba657f8da683333bd6de620510cd591c0916e2d54ea2e0eebd2aeb305fd8ea9",
+      "policy.py": "d6ed01ab80223ee898a82c8b037ee67bd66652be70b5f87a63230e8300d4d01f",
+      "gates.py": "ac1bdabfd92512cbfb00845fce6acc84e3cde96e099847dd4c1f0a1d02b9b25f",
+      "ragtruth.py": "77e160ce91948979be66c641781e5b44975a773cec9a608119d74d5b39832f43",
+      "config.py": "ea077629c5234f34853fd2c6560e2ede997bfe78f097f0db9cfd1025bc225c83"
+    },
+    "runner_sha256": "e190c7242f7c8b2bb310fc000b659f0f83a9bd240729714522a1ecf5a6df80b4"
+  },
+  "protocol": "ragtruth-paired-v1",
+  "label_kind": "cross_model_automatic_proxy_not_human_ground_truth",
+  "arms": {
+    "direct": {
+      "cases": 30,
+      "released": 30,
+      "release_coverage": 1.0,
+      "proxy_reviewed": 29,
+      "unreviewed_releases": 1,
+      "proxy_grounded_releases": 12,
+      "proxy_grounding_failures": 17,
+      "proxy_usable_releases": 11,
+      "proxy_verified_yield": 0.36666666666666664,
+      "proxy_grounded_release_rate": 0.4,
+      "proxy_bad_initial_rescue_count": 0,
+      "proxy_bad_initial_rescue_rate": 0.0,
+      "proxy_clean_changed_grounding_regressions": 0,
+      "clean_changed_releases": 0,
+      "fallback_reasons": {},
+      "model_calls": 0,
+      "known_tokens_lower_bound": 0,
+      "unknown_usage_calls": 0,
+      "latency_seconds": {
+        "mean": 1.5408328423897424e-05,
+        "p95": 2.01669754460454e-05,
+        "excludes_queue": true
+      }
+    },
+    "judge_only": {
+      "cases": 30,
+      "released": 11,
+      "release_coverage": 0.36666666666666664,
+      "proxy_reviewed": 11,
+      "unreviewed_releases": 0,
+      "proxy_grounded_releases": 9,
+      "proxy_grounding_failures": 2,
+      "proxy_usable_releases": 9,
+      "proxy_verified_yield": 0.3,
+      "proxy_grounded_release_rate": 0.8181818181818182,
+      "proxy_bad_initial_rescue_count": 0,
+      "proxy_bad_initial_rescue_rate": 0.0,
+      "proxy_clean_changed_grounding_regressions": 0,
+      "clean_changed_releases": 0,
+      "fallback_reasons": {
+        "repair_budget": 19
+      },
+      "model_calls": 31,
+      "known_tokens_lower_bound": 78093,
+      "unknown_usage_calls": 0,
+      "latency_seconds": {
+        "mean": 2.8314482848353992,
+        "p95": 4.5986849589971825,
+        "excludes_queue": true
+      }
+    },
+    "self_refine": {
+      "cases": 30,
+      "released": 30,
+      "release_coverage": 1.0,
+      "proxy_reviewed": 30,
+      "unreviewed_releases": 0,
+      "proxy_grounded_releases": 25,
+      "proxy_grounding_failures": 5,
+      "proxy_usable_releases": 25,
+      "proxy_verified_yield": 0.8333333333333334,
+      "proxy_grounded_release_rate": 0.8333333333333334,
+      "proxy_bad_initial_rescue_count": 12,
+      "proxy_bad_initial_rescue_rate": 0.8,
+      "proxy_clean_changed_grounding_regressions": 2,
+      "clean_changed_releases": 15,
+      "fallback_reasons": {},
+      "model_calls": 60,
+      "known_tokens_lower_bound": 104073,
+      "unknown_usage_calls": 0,
+      "latency_seconds": {
+        "mean": 4.261120087614594,
+        "p95": 5.718034250079654,
+        "excludes_queue": true
+      }
+    },
+    "quality_loop": {
+      "cases": 30,
+      "released": 27,
+      "release_coverage": 0.9,
+      "proxy_reviewed": 26,
+      "unreviewed_releases": 1,
+      "proxy_grounded_releases": 24,
+      "proxy_grounding_failures": 2,
+      "proxy_usable_releases": 24,
+      "proxy_verified_yield": 0.8,
+      "proxy_grounded_release_rate": 0.8888888888888888,
+      "proxy_bad_initial_rescue_count": 11,
+      "proxy_bad_initial_rescue_rate": 0.7333333333333333,
+      "proxy_clean_changed_grounding_regressions": 0,
+      "clean_changed_releases": 4,
+      "fallback_reasons": {
+        "judge_error": 2,
+        "model_budget": 1
+      },
+      "model_calls": 70,
+      "known_tokens_lower_bound": 180481,
+      "unknown_usage_calls": 0,
+      "latency_seconds": {
+        "mean": 6.989467497282506,
+        "p95": 16.538892167038284,
+        "excludes_queue": true
+      }
+    },
+    "refine_verify": {
+      "cases": 30,
+      "released": 29,
+      "release_coverage": 0.9666666666666667,
+      "proxy_reviewed": 29,
+      "unreviewed_releases": 0,
+      "proxy_grounded_releases": 26,
+      "proxy_grounding_failures": 3,
+      "proxy_usable_releases": 26,
+      "proxy_verified_yield": 0.8666666666666667,
+      "proxy_grounded_release_rate": 0.896551724137931,
+      "proxy_bad_initial_rescue_count": 13,
+      "proxy_bad_initial_rescue_rate": 0.8666666666666667,
+      "proxy_clean_changed_grounding_regressions": 2,
+      "clean_changed_releases": 14,
+      "fallback_reasons": {
+        "repair_budget": 1
+      },
+      "model_calls": 66,
+      "known_tokens_lower_bound": 142676,
+      "unknown_usage_calls": 0,
+      "latency_seconds": {
+        "mean": 4.496446009686527,
+        "p95": 9.739424375002272,
+        "excludes_queue": true
+      }
+    }
+  },
+  "reviewer_original_label_agreement": {
+    "cases": 30,
+    "matches": 23,
+    "all_case_agreement": 0.7666666666666667,
+    "errors": 1,
+    "unknown": 0
+  },
+  "review_calls": 101,
+  "human_review_status": "pending",
+  "limitations": [
+    "Equal budget ceilings do not mean equal actual token/call consumption.",
+    "Automatic reviewer may be wrong and may share biases with the runtime model.",
+    "Balanced cohort prevalence and small pilot do not represent production traffic.",
+    "Original human labels validate original outputs, not rewritten candidates.",
+    "No production accuracy or human-confirmed repair success is claimed."
+  ]
+}

@@ -140,6 +140,12 @@ QA、摘要、数据转文本各 200 条，每类包含 100 条有效幻觉样�
 [60 条开发集阈值诊断](benchmarks/results/ragtruth-dev-thresholds-60/report.md)表明 PASS 分数集中于 1.0，
 调高阈值不能解决本轮误放行。接入前请阅读[运行边界](docs/operational_boundaries.md)。
 
+[优化记录](docs/optimization_results.md)保留四轮开发诊断和
+[排除初版全部原材料的 60 条冻结验证](benchmarks/results/ragtruth-optimized-eval-60/report.md)：
+普通自我修正得到 **50/60 条可用代理输出**，完整闭环 **40/60**，计入预算的自检后闭环 **46/60**。
+独立 Plus Judge 的开发诊断也未证明领先。非思考 JSON、失败调用计费保留与协议纠错重试完善的是
+工程约束，不是已经证明的语义准确率提升。工作台可查看全部配置和失败实验，修复稿人工盲审仍待完成。
+
 单场景 RAG 评测使用确定性生成的 60 条样本：
 
 ```bash
@@ -173,7 +179,9 @@ from verifigen import Criterion, QualityLoop, QualityTask, make_qwen3_8b_stack
 
 
 async def main():
-    stack = make_qwen3_8b_stack(api_key=os.environ["DASHSCOPE_API_KEY"], model="qwen3.5-flash")
+    stack = make_qwen3_8b_stack(
+        api_key=os.environ["DASHSCOPE_API_KEY"], model="qwen3.5-flash", enable_thinking=False
+    )
     task = QualityTask(
         source={"order": {"paid": 799, "status": "shipped"}},
         prompt="向用户说明订单金额和状态。",

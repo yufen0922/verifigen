@@ -51,14 +51,52 @@ def main() -> None:
                 raise ValueError("Runtime call ceiling exceeded")
             if record["status"] != "passed" and record["output"] is not None:
                 raise ValueError("Fallback contains a released candidate")
+            runtime = record.get("runtime", {})
+            if record["arm"] in ("judge_only", "quality_loop", "refine_verify"):
+                if (
+                    not 0
+                    <= runtime["repair_rounds"]
+                    <= config["budget_ceiling"]["max_repair_rounds"]
+                ):
+                    raise ValueError("Revision ceiling exceeded")
+                if (
+                    runtime["model_calls"] != record["model_calls"]
+                    or runtime["usages"] != record["usages"]
+                ):
+                    raise ValueError("Runtime accounting differs from the arm record")
+                if record["status"] == "passed" and record["arm"] in (
+                    "judge_only",
+                    "quality_loop",
+                    "refine_verify",
+                ):
+                    if not runtime.get("rounds"):
+                        raise ValueError("Verified release has no final judgment")
+                    final = runtime["rounds"][-1]
+                    if (
+                        final["candidate"] != record["output"]
+                        or final["effective_verdict"]["status"] != "pass"
+                        or final["effective_verdict"]["score"]
+                        < config["budget_ceiling"]["min_pass_score"]
+                    ):
+                        raise ValueError("Release differs from its final passing candidate")
         packets, mapping = blind_packets(samples, records)
+        packet_path = args.results / "blind-packets.jsonl"
+        # The original pilot published mappings but not standalone input packets.
+        if packet_path.exists() or "split" in config:
+            stored_packets = read_jsonl(packet_path)
+            if sorted(packets, key=lambda r: r["review_id"]) != sorted(
+                stored_packets, key=lambda r: r["review_id"]
+            ):
+                raise ValueError("Anonymous review packets differ from source/candidates")
         stored_mapping = read_jsonl(args.results / "review-mapping.jsonl")
         if sorted(mapping, key=lambda r: (r["id"], r["arm"])) != sorted(
             stored_mapping, key=lambda r: (r["id"], r["arm"])
         ):
             raise ValueError("Review mapping differs from candidates")
         reviews = read_jsonl(args.results / "reviews.jsonl")
-        if {r["review_id"] for r in reviews} != {p["review_id"] for p in packets}:
+        if len(reviews) != len(packets) or {r["review_id"] for r in reviews} != {
+            p["review_id"] for p in packets
+        }:
             raise ValueError("Review set incomplete")
         expected_summary = {"config": config, **summarize(records, mapping, reviews)}
         if json.loads((args.results / "summary.json").read_text()) != expected_summary:

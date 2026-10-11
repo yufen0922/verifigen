@@ -421,9 +421,11 @@ function baselines() {
   for (const arm of Object.keys(summary.arms)) $("baseline-arm").add(new Option(labels[arm], arm));
   $("baseline-arm").value = previousArm in summary.arms ? previousArm : "quality_loop";
   $("baseline-note").textContent =
-    `${config.selected_case_ids.length} 条均衡抽样 · ${config.model} · 评审 ${config.reviewer_model} · ` +
+    `${config.selected_case_ids.length} 条均衡抽样 · ${config.split === "dev" ? "开发诊断" : "评测"} · ` +
+    `生成/修复 ${config.model} · Judge ${config.judge_model || config.model} · 评审 ${config.reviewer_model} · ` +
+    `模式 ${config.enable_thinking === false ? "非思考" : "思考"} · ` +
     `原稿人工标签一致率 ${percent(summary.reviewer_original_label_agreement.all_case_agreement)} · ` +
-    "预算上限相同，实际消耗不同；自动评审为代理指标，人工双人盲审待完成。";
+    "预算上限相同，实际消耗不同；自动评审为代理指标，人工双人盲审待完成。不同实验样本不同，不可直接相减。";
   for (const [arm, m] of Object.entries(summary.arms)) {
     const tr = node("tr");
     for (const value of [labels[arm], m.cases, percent(m.release_coverage),

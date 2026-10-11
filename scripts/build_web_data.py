@@ -121,6 +121,10 @@ def main() -> None:
     experiments = []
     for identifier, label in (
         ("ragtruth-comparison-60", "初版对照 · 60 条"),
+        ("ragtruth-optimized-dev-30", "开发诊断 · 30 条"),
+        ("ragtruth-quoted-dev-30", "引用契约开发诊断 · 30 条"),
+        ("ragtruth-json-dev-30", "非思考模式开发诊断 · 30 条"),
+        ("ragtruth-plus-judge-dev-30", "独立 Judge 开发诊断 · 30 条"),
         ("ragtruth-optimized-eval-60", "优化版对照 · 60 条"),
     ):
         comparison = ROOT / "benchmarks/results" / identifier

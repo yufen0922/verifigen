@@ -125,16 +125,39 @@ const fs = require("node:fs");
       });
     }
     await page.locator('[data-view="baselines"]').click();
+    const comparisonData = await (await page.request.get(
+      `${process.env.WORKBENCH_URL || "http://127.0.0.1:8765"}/api/comparison`,
+    )).json();
+    const selectedExperiment = comparisonData.experiments?.find(
+      (experiment) => experiment.id === comparisonData.default_id,
+    ) || comparisonData;
+    const expectedArms = Object.keys(selectedExperiment.summary.arms).length;
     await page.waitForFunction(
-      () => document.querySelector("#baseline-metrics").children.length === 4,
+      (count) => document.querySelector("#baseline-metrics").children.length === count,
+      expectedArms,
     );
     assert.equal(await page.locator("#baseline-records tr").count(), 60);
-    assert.match(await page.locator("#baseline-note").textContent(), /68.33%/);
+    assert.match(await page.locator("#baseline-note").textContent(), /代理指标/);
     await page.locator("#baseline-arm").selectOption("self_refine");
     assert.equal(await page.locator("#baseline-records tr").count(), 60);
     await page.locator("#baseline-records button").first().click();
     assert.match(await page.locator("#record-content").textContent(), /cross_model_automatic_proxy/);
     await page.locator("#close-dialog").click();
+    if (comparisonData.experiments?.length > 1) {
+      await page.locator("#baseline-experiment").selectOption("ragtruth-comparison-60");
+      assert.equal(await page.locator("#baseline-metrics tr").count(), 4);
+      assert.match(await page.locator("#baseline-note").textContent(), /68.33%/);
+      for (const experiment of comparisonData.experiments.filter((e) => e.summary.config.split === "dev")) {
+        await page.locator("#baseline-experiment").selectOption(experiment.id);
+        assert.equal(await page.locator("#baseline-metrics tr").count(), Object.keys(experiment.summary.arms).length);
+        assert.equal(await page.locator("#baseline-records tr").count(), experiment.summary.config.selected_case_ids.length);
+        assert.match(await page.locator("#baseline-note").textContent(), /开发诊断/);
+        assert.ok((await page.locator("#baseline-note").textContent()).includes(experiment.summary.config.judge_model || experiment.summary.config.model));
+      }
+      await page.locator("#baseline-experiment").selectOption(comparisonData.default_id);
+      await page.locator("#baseline-arm").selectOption("refine_verify");
+      assert.equal(await page.locator("#baseline-records tr").count(), 60);
+    }
     for (const viewport of [
       { width: 1440, height: 1080 },
       { width: 390, height: 844 },
@@ -142,6 +165,12 @@ const fs = require("node:fs");
     ]) {
       await page.setViewportSize(viewport);
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+      if (viewport.width <= 390) {
+        const titleBox = await page.locator("#baselines-view h1").boundingBox();
+        const selectBox = await page.locator("#baseline-experiment").boundingBox();
+        assert.ok(titleBox.height < 30, "Comparison title must remain one line");
+        assert.ok(selectBox.y >= titleBox.y + titleBox.height, "Experiment selector must sit below title");
+      }
       await page.screenshot({path: `runs/screenshots/baselines-${viewport.width}.png`, fullPage: false});
     }
     await page.setViewportSize({ width: 1440, height: 1080 });

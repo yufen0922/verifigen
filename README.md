@@ -155,6 +155,14 @@ A separate [60-case development diagnostic](benchmarks/results/ragtruth-dev-thre
 finds saturated PASS scores: changing the score threshold alone does not fix false releases.
 See [operational boundaries](docs/operational_boundaries.md) before integrating a live service.
 
+The [optimization record](docs/optimization_results.md) retains four development trials and a
+[frozen, source-disjoint 60-case validation](benchmarks/results/ragtruth-optimized-eval-60/report.md):
+ordinary self-refinement produces **50/60 usable proxy outputs**, the full loop **40/60**, and
+charged refine-then-verify **46/60**. A separately configured Plus Judge also fails to establish
+superiority in development. Non-thinking JSON, known failed-call accounting and corrective protocol
+retries improve the engineering contract, not proven semantic accuracy. All configurations and
+unfavorable results are inspectable in the workbench; human post-repair review is still pending.
+
 ## Evaluation
 
 The single-scenario RAG suite has 60 deterministically generated cases:
@@ -193,7 +201,9 @@ from verifigen import Criterion, QualityLoop, QualityTask, make_qwen3_8b_stack
 
 
 async def main():
-    stack = make_qwen3_8b_stack(api_key=os.environ["DASHSCOPE_API_KEY"], model="qwen3.5-flash")
+    stack = make_qwen3_8b_stack(
+        api_key=os.environ["DASHSCOPE_API_KEY"], model="qwen3.5-flash", enable_thinking=False
+    )
     task = QualityTask(
         source={"order": {"paid": 799, "status": "shipped"}},
         prompt="Tell the customer the paid amount and shipping status.",
