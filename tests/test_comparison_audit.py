@@ -73,6 +73,7 @@ def test_audit_rejects_tampered_release_or_accounting(tmp_path, mutation):
         "ragtruth-evidence-v2-dev-30",
         "ragtruth-evidence-plus-dev-30",
         "ragtruth-evidence-plus-restored-dev-30",
+        "ragtruth-evidence-plus-eval-60",
     ],
 )
 def test_published_comparison_passes_audit(experiment):

@@ -37,7 +37,7 @@ jobs:
           done
       - name: Audit claim assessment experiments
         run: |
-          for results in benchmarks/results/ragtruth-evidence-dev-30 benchmarks/results/ragtruth-source-first-dev-30 benchmarks/results/ragtruth-evidence-v2-dev-30 benchmarks/results/ragtruth-evidence-plus-dev-30 benchmarks/results/ragtruth-evidence-plus-restored-dev-30; do
+          for results in benchmarks/results/ragtruth-evidence-dev-30 benchmarks/results/ragtruth-source-first-dev-30 benchmarks/results/ragtruth-evidence-v2-dev-30 benchmarks/results/ragtruth-evidence-plus-dev-30 benchmarks/results/ragtruth-evidence-plus-restored-dev-30 benchmarks/results/ragtruth-evidence-plus-eval-60; do
             uv run --locked --extra dev python scripts/audit_comparison.py --results "$results"
           done
       - run: uv run --locked --extra dev pytest --cov=verifigen --cov-fail-under=85

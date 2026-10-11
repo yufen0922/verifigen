@@ -31,6 +31,18 @@ const reasons = {
   invalid_schema: "输出 Schema 无效",
   renderer_error: "输出渲染失败",
 };
+const plusProfile = {
+  threshold: "0.8", rounds: "2", calls: "5", deadline: "120", tokens: "24000",
+  patience: "", "judge-history": "none", "protocol-retries": "1", "thinking-mode": "false",
+  "judge-strategy": "claims", "runtime-model": "qwen3.5-plus", "output-capacity": "8192",
+  "refinement-mode": "source_first",
+};
+const plusChecks = { "initial-refinement": true, "validate-quotes": false, "check-fulfillment": true };
+function syncProfile() {
+  const matches = Object.entries(plusProfile).every(([id, value]) => $(id).value === value)
+    && Object.entries(plusChecks).every(([id, value]) => $(id).checked === value);
+  $("run-profile").value = matches ? "plus_evidence" : "custom";
+}
 function node(tag, text, className) {
   const el = document.createElement(tag);
   if (text !== undefined) el.textContent = text;
@@ -66,6 +78,7 @@ function setBusy(value) {
   $("run").disabled = value;
   $("reset").disabled = value;
   $("preset").disabled = value;
+  $("run-profile").disabled = value;
   $("stop").hidden = !value;
 }
 function state(value, text) {
@@ -505,6 +518,7 @@ async function openRun(id) {
     $("runtime-model").value = stored.input.model || "configured";
     $("output-capacity").value = String(stored.input.max_output_tokens || 4096);
     $("model-label").textContent = stored.model;
+    syncProfile();
     $("initial").disabled = stored.input.generate;
     runId = id;
     record = stored;
@@ -613,6 +627,14 @@ function evaluation() {
   }
 }
 $("run").addEventListener("click", start);
+$("run-profile").addEventListener("change", () => {
+  if ($("run-profile").value !== "plus_evidence") return;
+  for (const [id, value] of Object.entries(plusProfile)) $(id).value = value;
+  for (const [id, value] of Object.entries(plusChecks)) $(id).checked = value;
+});
+for (const id of [...Object.keys(plusProfile), ...Object.keys(plusChecks)]) {
+  $(id).addEventListener("input", syncProfile);
+}
 $("stop").addEventListener("click", async () => {
   try {
     if (runId) await api(`/api/runs/${runId}/cancel`, { method: "POST" });

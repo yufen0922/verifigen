@@ -86,6 +86,21 @@ than excluding only response IDs. `--max-output-tokens` sets and freezes the sam
 for all runtime roles, including ordinary self-refinement; evaluator capacity is recorded separately.
 Changing the runtime model or completion ceiling changes capacity/cost, not just orchestration.
 
+The frozen all-Plus follow-up uses all three switches and excludes both previous pilot source sets:
+
+```bash
+DASHSCOPE_MODEL=qwen3.5-plus uv run --locked --extra llm python examples/ragtruth/compare.py \
+  --per-task 20 --optimized --judge-history none --judge-strategy claims \
+  --refinement-mode source_first --check-fulfillment --max-output-tokens 8192 \
+  --exclude-records benchmarks/results/ragtruth-comparison-60/records.jsonl \
+    benchmarks/results/ragtruth-optimized-eval-60/records.jsonl \
+  --output runs/plus-eval-60
+```
+
+These records are 60 responses from 55 source groups, excluding 113 prior pilot groups. They
+remain part of the historically evaluated pool. Use a fresh output directory; do not overwrite
+published artifacts. Upstream aliases and nondeterministic provider execution can change text.
+
 Before pending work, the runner sends one tiny JSON availability probe per required model alias.
 Probe attempts and known usage are recorded separately in `provider-probes.jsonl`, not charged to
 any arm. A failed probe prevents starting the batch. During runtime or review, an account-blocking
@@ -110,6 +125,15 @@ models and may share biases. This is an **automatic proxy**, not independent hum
 Review the evaluator itself: compare its judgments on unchanged original responses against
 RAGTruth labels. Low agreement makes post-repair proxy estimates less trustworthy. It does not
 become human-confirmed after changing to a more expensive model.
+
+Different model aliases do not establish evaluator independence or immutable weight identity.
+Both models remain in the Qwen family. Prefer explicit provider snapshots for future experiments
+when available, and still retain response/configuration hashes and evaluator-agreement checks.
+The provider documents snapshot mappings on its [Qwen3.5-Plus model page](https://help.aliyun.com/en/model-studio/qwen3-5-plus).
+Existing alias-based experiments are not retroactively relabeled as pinned-snapshot runs.
+Source-group exclusion prevents overlap between local trial cohorts, not possible exposure to
+public benchmark data during model training. This project has not measured training contamination;
+do not claim that the frozen follow-up is unseen by the underlying models or a production guarantee.
 
 ## Metric Denominators
 

@@ -10,6 +10,11 @@
   dropping in-flight records; expose allowlisted HTTP diagnostics without raw error bodies.
 - Let local workbench jobs select an allowlisted runtime model/output capacity and inspect claim
   assessments; flag unavailable reviews rather than treating outages as semantic performance.
+- Publish five further development attempts (including an inconclusive provider outage) and a
+  frozen Plus 60-case follow-up. The source-first hybrid has 55 usable proxy outputs versus 53
+  for self-refinement, with higher cost/latency and non-uniform task outcomes; retain limitations.
+- Add an opt-in, one-selection Plus evidence-first workbench preset without changing task data,
+  business gates or generic defaults; audit claim criterion coverage and test queue-stop behavior.
 
 - Add charged evidence-first refinement, separate Judge model configuration and corrective,
   budgeted protocol retries; retain known failed-call usage and explicit provider categories.

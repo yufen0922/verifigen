@@ -54,9 +54,11 @@ but comes from the historically evaluated 420-case pool, not a globally untouche
 | [Revised claim assessment](../benchmarks/results/ragtruth-evidence-v2-dev-30/report.md) | 30 dev | 251 + 101 | 26/30 | 22/30 | 24/30 |
 | [Plus attempt with unavailable review](../benchmarks/results/ragtruth-evidence-plus-dev-30/report.md) | 30 dev | 224 + 97 | Not comparable | Not comparable | Not comparable |
 | [Complete Plus development rerun](../benchmarks/results/ragtruth-evidence-plus-restored-dev-30/report.md) | 30 dev | 237 + 107 | 25/30 | 23/30 | 26/30 |
+| [Frozen Plus follow-up](../benchmarks/results/ragtruth-evidence-plus-eval-60/report.md) | 60 eval | 458 + 216 | 53/60 | 48/60 | 55/60 |
 
 The first five optimization experiments total 2,000 model calls; the four subsequent attempts
-add 1,371 calls. The complete Plus rerun adds 344. This excludes separately recorded development debug probes, availability probes
+add 1,371 calls. The complete Plus rerun adds 344 and frozen follow-up 674 (4,389 optimization
+runtime/review calls in total). This excludes separately recorded development debug probes, availability probes
 and workbench smoke calls. Frozen code/configuration hashes and individual records are
 included in every result directory. Earlier trials are never overwritten after fixing the code.
 This is not a sum of unique cases: development inputs repeat, and all five arms share each case.
@@ -69,7 +71,7 @@ RAGTruth human labels apply to original responses only. Human post-repair review
 
 ## Supported Conclusions
 
-The hybrid is better than the original loop on this frozen paired validation, but ordinary
+On the earlier frozen Flash validation, the hybrid is better than the original loop, but ordinary
 self-refinement still has higher useful yield and lower cost. Development's one-case hybrid
 lead did not generalize. A more capable Judge did not establish superiority either. Do not
 advertise these changes as a new human-confirmed repair success rate or universal improvement.
@@ -86,9 +88,20 @@ on the evaluation cohort until a favorable headline appears.
 
 The later complete Plus development rerun shows a one-case hybrid lead (26 versus 25 usable proxy
 outputs), but a large token/latency increase. The original loop still trails. This is a hypothesis
-for source-disjoint frozen validation, not a validated improvement. The first all-Plus attempt's
+for source-disjoint frozen validation, not itself a validated improvement. The first all-Plus attempt's
 85/97 unavailable reviews preclude semantic ranking; both the interrupted and full rerun artifacts
 are preserved. The evaluator agrees with original human labels on only 22/30 cases in the rerun.
+
+The frozen Plus follow-up excludes the union of 113 previous pilot source groups: 60 cases,
+55 source groups, all baselines rerun and no tuning on follow-up outcomes. The source-first hybrid
+has 55 usable proxy outputs versus self-refinement's 53, with three versus six observed grounding
+FAIL releases. It also consumes 60.67% more known runtime tokens and has P95 31.69 versus 11.39
+seconds. The original loop remains behind at 48/60. Hybrid leads Data2txt (17 versus 14), ties
+Summary (20 each) and trails QA (18 versus 19); paired unique successes are five versus three.
+This is a small descriptive proxy advantage, not universal superiority or statistical significance.
+Review agreement with original human labels is 47/60 (78.33%), with four unavailable reviews.
+The combined model/capacity/protocol change is not an orchestration-only ablation. Human review
+and genuinely matched-consumption baselines remain necessary.
 
 ## Recompute Without API Calls
 

@@ -63,6 +63,13 @@ in the run details. A larger completion ceiling is not a larger overall budget: 
 revision, elapsed-time and observed-token limits still apply. Changing models or output capacity
 also changes cost and cannot be presented as an orchestration-only improvement.
 
+The `Plus 证据优先` configuration preset applies the frozen follow-up's runtime settings in one
+selection: Plus, claim checks, source-first preliminary revision, fulfillment, hidden Judge history,
+8,192 output tokens, five calls/two edits/120 seconds/24,000 observed tokens, one protocol retry,
+non-thinking mode and no score-plateau stop. It leaves task inputs and business gates unchanged.
+Editing any of those settings marks the configuration custom; stored runs restore their actual
+fields. This is an explicit opt-in, not a new default or a guarantee of better results in every task.
+
 The browser consumes SSE observations with sequence IDs; reconnecting replays missing events.
 `round_complete` contains both the model verdict and the effective verdict after hard gates.
 Core metadata traces still exclude task text. Observer exceptions cannot change loop decisions.

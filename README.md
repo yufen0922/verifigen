@@ -172,6 +172,14 @@ this repeated development result is not a validated improvement. The provider-un
 is retained and clearly marked inconclusive. Batch probes and queue guards prevent continuing queued
 requests after account failures. The workbench can select runtime models/capacity and inspect checks.
 
+The [frozen Plus follow-up](benchmarks/results/ragtruth-evidence-plus-eval-60/report.md) reruns all
+five arms on 60 responses, excluding both old pilots' source groups: the source-first hybrid has
+**55/60 usable proxy outputs** versus self-refinement's **53/60**, with three versus six released
+grounding failures. It uses 60.67% more known runtime tokens and has P95 31.69 versus 11.39 seconds.
+The full loop remains at 48/60; hybrid gains are concentrated in Data2txt, not every task. This is
+a small descriptive proxy advantage, not human-confirmed or universal superiority. The workbench's
+opt-in `Plus 证据优先` preset applies its runtime settings; generic defaults remain unchanged.
+
 ## Evaluation
 
 The single-scenario RAG suite has 60 deterministically generated cases:

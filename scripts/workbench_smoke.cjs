@@ -28,6 +28,27 @@ const fs = require("node:fs");
       "qwen3.5-flash",
     );
     assert.ok((await page.locator("svg.lucide").count()) > 0);
+    const configuration = await page.evaluate(() => [...document.querySelectorAll(".budget-grid input, .budget-grid select, .toggle-label input")]
+      .filter((el) => el.id !== "run-profile").map((el) => ({id: el.id, value: el.value, checked: el.checked})));
+    const unchangedSource = await page.locator("#source").inputValue();
+    await page.locator("#run-profile").selectOption("plus_evidence");
+    assert.equal(await page.locator("#runtime-model").inputValue(), "qwen3.5-plus");
+    assert.equal(await page.locator("#judge-strategy").inputValue(), "claims");
+    assert.equal(await page.locator("#output-capacity").inputValue(), "8192");
+    assert.equal(await page.locator("#tokens").inputValue(), "24000");
+    assert.ok(await page.locator("#initial-refinement").isChecked());
+    assert.ok(await page.locator("#check-fulfillment").isChecked());
+    assert.equal(await page.locator("#source").inputValue(), unchangedSource);
+    await page.locator("#judge-history").selectOption("full");
+    assert.equal(await page.locator("#run-profile").inputValue(), "custom");
+    await page.evaluate((values) => {
+      for (const {id, value, checked} of values) {
+        const el = document.getElementById(id);
+        el.value = value;
+        el.checked = checked;
+        el.dispatchEvent(new Event("input", {bubbles: true}));
+      }
+    }, configuration);
     fs.mkdirSync("runs/screenshots", { recursive: true });
     await page.screenshot({
       path: "runs/screenshots/workbench-desktop.png",
@@ -62,8 +83,7 @@ const fs = require("node:fs");
       await page.locator("#judge-strategy").selectOption("claims");
       await page.locator("#check-fulfillment").check();
       if (process.argv.includes("--plus")) {
-        await page.locator("#runtime-model").selectOption("qwen3.5-plus");
-        await page.locator("#output-capacity").selectOption("8192");
+        await page.locator("#run-profile").selectOption("plus_evidence");
       }
     }
     if (process.argv.includes("--live") || process.argv.includes("--evidence-live")) {
