@@ -1,0 +1,321 @@
+{
+  "kind": "targeted_known_failure_regression_not_holdout_accuracy",
+  "case_id": "8242",
+  "model": "qwen3.5-flash",
+  "reviewer_model": "qwen-plus",
+  "source_sha256": "1e702106e17142e25c034e7dc72d5bbcbe38e7ac6ae1a42297f7a20362624bcc",
+  "agents_sha256": "a51fee027f5196da05a64a33730a7cba1e5d1fb5077da6a34ae0186de0222f7f",
+  "baseline_record_sha256": "f135bed9c8b3b7978d781236afbac45e4cd507a4b94463bc4190f731ebaa8b2e",
+  "budget": {
+    "max_model_calls": 5,
+    "max_repair_rounds": 2,
+    "deadline_seconds": 120.0,
+    "min_pass_score": 0.8,
+    "max_observed_tokens": 24000
+  },
+  "initial": {
+    "answer": "101 Deli is a small deli located at 130 N Calle Cesar Chavez in Santa Barbara, CA, offering sandwiches, sushi, and salads. The business holds a 4.5-star rating based on customer reviews. While some patrons praise the authentic Asian dishes, such as the chicken teriyaki lunch combo with miso soup and California rolls, others have expressed dissatisfaction. One reviewer noted that the tri-tip sandwich was mostly bread with little meat, and another described the meat as having no taste and the bread as possibly stale. Despite these criticisms, customers appreciate the quick service, the friendly owners, and the value of the food, which includes options like indoor and outdoor seating. The establishment offers takeout but does not provide delivery, reservations, or parking."
+  },
+  "result": {
+    "run_id": "b0176ff75d8242d78f9e3ac33948e197",
+    "status": "passed",
+    "output": {
+      "answer": "101 Deli is a small deli located at 130 N Calle Cesar Chavez in Santa Barbara, CA, offering sandwiches, sushi, and salads. The business holds a 4.5-star rating based on customer reviews. While some patrons praise the authentic Asian dishes, such as the chicken teriyaki lunch combo with miso soup and California rolls, others have expressed dissatisfaction. One reviewer noted that the tri-tip sandwich was mostly bread with little meat, and another described the meat as having no taste and the bread as possibly stale. Despite these criticisms, customers appreciate the quick service, the friendly owners, and the value of the food, which includes options like indoor and outdoor seating. The establishment offers takeout but does not provide reservations or WiFi."
+    },
+    "best_candidate": {
+      "answer": "101 Deli is a small deli located at 130 N Calle Cesar Chavez in Santa Barbara, CA, offering sandwiches, sushi, and salads. The business holds a 4.5-star rating based on customer reviews. While some patrons praise the authentic Asian dishes, such as the chicken teriyaki lunch combo with miso soup and California rolls, others have expressed dissatisfaction. One reviewer noted that the tri-tip sandwich was mostly bread with little meat, and another described the meat as having no taste and the bread as possibly stale. Despite these criticisms, customers appreciate the quick service, the friendly owners, and the value of the food, which includes options like indoor and outdoor seating. The establishment offers takeout but does not provide reservations or WiFi."
+    },
+    "text": "101 Deli is a small deli located at 130 N Calle Cesar Chavez in Santa Barbara, CA, offering sandwiches, sushi, and salads. The business holds a 4.5-star rating based on customer reviews. While some patrons praise the authentic Asian dishes, such as the chicken teriyaki lunch combo with miso soup and California rolls, others have expressed dissatisfaction. One reviewer noted that the tri-tip sandwich was mostly bread with little meat, and another described the meat as having no taste and the bread as possibly stale. Despite these criticisms, customers appreciate the quick service, the friendly owners, and the value of the food, which includes options like indoor and outdoor seating. The establishment offers takeout but does not provide reservations or WiFi.",
+    "reason": "judge_passed",
+    "verdicts": [
+      {
+        "status": "fail",
+        "score": 0.5,
+        "summary": "The candidate output contains unsupported factual claims regarding parking and delivery services not present in the source data.",
+        "issues": [
+          {
+            "criterion_id": "grounding",
+            "message": "The claim that the business 'does not provide delivery' is unsupported by the source data which does not mention delivery status.",
+            "evidence": "Source data attributes do not include a 'delivery' field; only 'RestaurantsTakeOut': true is listed.",
+            "suggestion": "Remove the statement about delivery or state that delivery information is not provided in the source."
+          },
+          {
+            "criterion_id": "grounding",
+            "message": "The claim that the establishment 'does not provide... parking' contradicts the source data which lists specific parking attributes (garage: false, street: null, validated: false, lot: false, valet: false) but does not explicitly state no parking exists, and 'street' being null implies uncertainty rather than a definitive negative for all types.",
+            "evidence": "Source attributes: 'BusinessParking': {'garage': False, 'street': None, 'validated': False, 'lot': False, 'valet': False}. The absence of 'street' as True/False or explicit 'no parking' text makes a definitive negative claim unsupported.",
+            "suggestion": "Rephrase to reflect the specific parking attributes found (e.g., 'No garage, lot, or valet parking available') or omit if the data is insufficient to confirm the lack of street parking."
+          }
+        ]
+      },
+      {
+        "status": "pass",
+        "score": 1.0,
+        "summary": "The candidate output is factually grounded in the provided source data. It accurately reflects the business details, attributes (takeout, no reservations, no WiFi), and specific review content without introducing unsupported claims about delivery or parking.",
+        "issues": []
+      }
+    ],
+    "trace": [
+      {
+        "event": "started",
+        "elapsed_ms": 0.247,
+        "details": {
+          "criteria": [
+            "grounding"
+          ],
+          "max_repair_rounds": 2,
+          "budget": {
+            "max_model_calls": 5,
+            "max_repair_rounds": 2,
+            "deadline_seconds": 120.0,
+            "min_pass_score": 0.8,
+            "max_observed_tokens": 24000
+          },
+          "policy": {
+            "score_patience": null,
+            "min_score_gain": 0.01
+          },
+          "judge_history": "full"
+        }
+      },
+      {
+        "event": "call_started",
+        "elapsed_ms": 1.234,
+        "details": {
+          "role": "judge",
+          "model_calls": 1
+        }
+      },
+      {
+        "event": "judged",
+        "elapsed_ms": 14579.082,
+        "details": {
+          "round": 0,
+          "status": "fail",
+          "score": 0.5,
+          "issue_ids": [
+            "grounding",
+            "grounding"
+          ],
+          "provider": "qwen3.5-flash",
+          "total_tokens": 3800
+        }
+      },
+      {
+        "event": "gate_checked",
+        "elapsed_ms": 14579.619,
+        "details": {
+          "gate_index": 0,
+          "issue_count": 0
+        }
+      },
+      {
+        "event": "decision",
+        "elapsed_ms": 14579.722,
+        "details": {
+          "round": 0,
+          "action": "repair",
+          "reason": "issues_found"
+        }
+      },
+      {
+        "event": "call_started",
+        "elapsed_ms": 14579.742,
+        "details": {
+          "role": "repair",
+          "model_calls": 2
+        }
+      },
+      {
+        "event": "call_finished",
+        "elapsed_ms": 28056.552,
+        "details": {
+          "role": "repair",
+          "provider": "qwen3.5-flash",
+          "total_tokens": 4089
+        }
+      },
+      {
+        "event": "repair_committed",
+        "elapsed_ms": 28056.62,
+        "details": {
+          "round": 1,
+          "candidate_digest": "fd5546b45b7ffa3ef5a5214b38a7bea5ab53710582b96c72da16dd858ce6a2e3"
+        }
+      },
+      {
+        "event": "call_started",
+        "elapsed_ms": 28056.64,
+        "details": {
+          "role": "judge",
+          "model_calls": 3
+        }
+      },
+      {
+        "event": "judged",
+        "elapsed_ms": 46167.623,
+        "details": {
+          "round": 1,
+          "status": "pass",
+          "score": 1.0,
+          "issue_ids": [],
+          "provider": "qwen3.5-flash",
+          "total_tokens": 3833
+        }
+      },
+      {
+        "event": "gate_checked",
+        "elapsed_ms": 46168.011,
+        "details": {
+          "gate_index": 0,
+          "issue_count": 0
+        }
+      },
+      {
+        "event": "decision",
+        "elapsed_ms": 46168.096,
+        "details": {
+          "round": 1,
+          "action": "publish",
+          "reason": "judge_passed"
+        }
+      },
+      {
+        "event": "published",
+        "elapsed_ms": 46168.123,
+        "details": {
+          "reason": "judge_passed"
+        }
+      }
+    ],
+    "model_calls": 3,
+    "repair_rounds": 1,
+    "usages": [
+      {
+        "input_tokens": 2409,
+        "output_tokens": 1391,
+        "cost_usd": null
+      },
+      {
+        "input_tokens": 2833,
+        "output_tokens": 1256,
+        "cost_usd": null
+      },
+      {
+        "input_tokens": 2727,
+        "output_tokens": 1106,
+        "cost_usd": null
+      }
+    ],
+    "gate_reports": [
+      {
+        "round_index": 0,
+        "gate_index": 0,
+        "issues": []
+      },
+      {
+        "round_index": 1,
+        "gate_index": 0,
+        "issues": []
+      }
+    ],
+    "rounds": [
+      {
+        "round_index": 0,
+        "candidate": {
+          "answer": "101 Deli is a small deli located at 130 N Calle Cesar Chavez in Santa Barbara, CA, offering sandwiches, sushi, and salads. The business holds a 4.5-star rating based on customer reviews. While some patrons praise the authentic Asian dishes, such as the chicken teriyaki lunch combo with miso soup and California rolls, others have expressed dissatisfaction. One reviewer noted that the tri-tip sandwich was mostly bread with little meat, and another described the meat as having no taste and the bread as possibly stale. Despite these criticisms, customers appreciate the quick service, the friendly owners, and the value of the food, which includes options like indoor and outdoor seating. The establishment offers takeout but does not provide delivery, reservations, or parking."
+        },
+        "verdict": {
+          "status": "fail",
+          "score": 0.5,
+          "summary": "The candidate output contains unsupported factual claims regarding parking and delivery services not present in the source data.",
+          "issues": [
+            {
+              "criterion_id": "grounding",
+              "message": "The claim that the business 'does not provide delivery' is unsupported by the source data which does not mention delivery status.",
+              "evidence": "Source data attributes do not include a 'delivery' field; only 'RestaurantsTakeOut': true is listed.",
+              "suggestion": "Remove the statement about delivery or state that delivery information is not provided in the source."
+            },
+            {
+              "criterion_id": "grounding",
+              "message": "The claim that the establishment 'does not provide... parking' contradicts the source data which lists specific parking attributes (garage: false, street: null, validated: false, lot: false, valet: false) but does not explicitly state no parking exists, and 'street' being null implies uncertainty rather than a definitive negative for all types.",
+              "evidence": "Source attributes: 'BusinessParking': {'garage': False, 'street': None, 'validated': False, 'lot': False, 'valet': False}. The absence of 'street' as True/False or explicit 'no parking' text makes a definitive negative claim unsupported.",
+              "suggestion": "Rephrase to reflect the specific parking attributes found (e.g., 'No garage, lot, or valet parking available') or omit if the data is insufficient to confirm the lack of street parking."
+            }
+          ]
+        },
+        "effective_verdict": {
+          "status": "fail",
+          "score": 0.5,
+          "summary": "The candidate output contains unsupported factual claims regarding parking and delivery services not present in the source data.",
+          "issues": [
+            {
+              "criterion_id": "grounding",
+              "message": "The claim that the business 'does not provide delivery' is unsupported by the source data which does not mention delivery status.",
+              "evidence": "Source data attributes do not include a 'delivery' field; only 'RestaurantsTakeOut': true is listed.",
+              "suggestion": "Remove the statement about delivery or state that delivery information is not provided in the source."
+            },
+            {
+              "criterion_id": "grounding",
+              "message": "The claim that the establishment 'does not provide... parking' contradicts the source data which lists specific parking attributes (garage: false, street: null, validated: false, lot: false, valet: false) but does not explicitly state no parking exists, and 'street' being null implies uncertainty rather than a definitive negative for all types.",
+              "evidence": "Source attributes: 'BusinessParking': {'garage': False, 'street': None, 'validated': False, 'lot': False, 'valet': False}. The absence of 'street' as True/False or explicit 'no parking' text makes a definitive negative claim unsupported.",
+              "suggestion": "Rephrase to reflect the specific parking attributes found (e.g., 'No garage, lot, or valet parking available') or omit if the data is insufficient to confirm the lack of street parking."
+            }
+          ]
+        }
+      },
+      {
+        "round_index": 1,
+        "candidate": {
+          "answer": "101 Deli is a small deli located at 130 N Calle Cesar Chavez in Santa Barbara, CA, offering sandwiches, sushi, and salads. The business holds a 4.5-star rating based on customer reviews. While some patrons praise the authentic Asian dishes, such as the chicken teriyaki lunch combo with miso soup and California rolls, others have expressed dissatisfaction. One reviewer noted that the tri-tip sandwich was mostly bread with little meat, and another described the meat as having no taste and the bread as possibly stale. Despite these criticisms, customers appreciate the quick service, the friendly owners, and the value of the food, which includes options like indoor and outdoor seating. The establishment offers takeout but does not provide reservations or WiFi."
+        },
+        "verdict": {
+          "status": "pass",
+          "score": 1.0,
+          "summary": "The candidate output is factually grounded in the provided source data. It accurately reflects the business details, attributes (takeout, no reservations, no WiFi), and specific review content without introducing unsupported claims about delivery or parking.",
+          "issues": []
+        },
+        "effective_verdict": {
+          "status": "pass",
+          "score": 1.0,
+          "summary": "The candidate output is factually grounded in the provided source data. It accurately reflects the business details, attributes (takeout, no reservations, no WiFi), and specific review content without introducing unsupported claims about delivery or parking.",
+          "issues": []
+        }
+      }
+    ]
+  },
+  "external_review": {
+    "review_id": "62f3e7152b511cf09175c7ea30ff6080cdde606fe73313db7083f8a23dc84f29",
+    "kind": "cross_model_automatic_proxy",
+    "status": "reviewed",
+    "review": {
+      "grounding": "fail",
+      "fulfillment": "pass",
+      "explanation": "The candidate overview is substantively responsive to the task (100–200 word objective overview based only on structured data and customer reviews), so fulfillment=pass. However, grounding fails due to unsupported claims: (1) 'indoor and outdoor seating' — evidence confirms 'OutdoorSeating': True but says nothing about indoor seating; the 5-star review mentions 'indoor and outdoor seating', but that is a *reviewer's claim*, not part of the structured data or verified fact in the evidence — the task instructs using *only the provided structured data* (which lacks indoor seating info); (2) 'the friendly owners' — structured data gives no owner information; the 5-star review describes 'the cute Asian couple that owns it' and calls them 'nice and sweet', but that is subjective reviewer opinion, not objective structured data; (3) 'authentic Asian dishes' — 'Asian' is never in categories, attributes, or business name; the 5-star review uses 'Asian' descriptively, but the task restricts use to *structured data only*, and 'categories' are 'Delis, Restaurants' — no mention of Asian cuisine in structured data.",
+      "issues": [
+        {
+          "kind": "unsupported",
+          "claim": "indoor and outdoor seating",
+          "evidence": "Structured data shows 'OutdoorSeating': True, but contains no information about indoor seating. The review text mentioning indoor seating is not part of the structured data and must be excluded per task instructions."
+        },
+        {
+          "kind": "unsupported",
+          "claim": "the friendly owners",
+          "evidence": "Structured data includes no information about ownership, identity, or demeanor of owners. The 5-star review's description of 'the cute Asian couple that owns it' and 'so nice and sweet' is subjective reviewer commentary, not structured data."
+        },
+        {
+          "kind": "unsupported",
+          "claim": "authentic Asian dishes",
+          "evidence": "Categories are 'Delis, Restaurants'; no 'Asian' or cuisine-type attribute appears in structured data. The 5-star review's 'Asian' references are personal observations, not structured facts — task explicitly requires using only the provided structured data."
+        }
+      ]
+    },
+    "model_calls": 1,
+    "usage": {
+      "input_tokens": 2239,
+      "output_tokens": 495,
+      "cost_usd": null
+    },
+    "latency_seconds": 11.69180333300028
+  },
+  "human_review_status": "pending"
+}

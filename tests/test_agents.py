@@ -62,13 +62,18 @@ async def test_llm_judge_prompt_contains_original_context_constraints_and_candid
     assert user["source"]["candidate_output_schema"] == task().output_schema
     assert user["previous_candidate"] == {"answer": "799"}
     assert "Explain the amount" in user["task"]
+    instructions = body["messages"][0]["content"]
+    assert "Missing source attributes mean unknown, not false" in instructions
+    assert "Do not invent extra requirements" in instructions
 
 
 async def test_llm_repairer_receives_judge_issues_and_returns_candidate():
     captured = {}
+    prompts = []
 
     def handler(request):
         body = json.loads(request.content)
+        prompts.append(body["messages"][0]["content"])
         captured.update(json.loads(body["messages"][1]["content"]))
         return httpx.Response(
             200,
@@ -101,6 +106,7 @@ async def test_llm_repairer_receives_judge_issues_and_returns_candidate():
     assert captured["previous_candidate"] == {"answer": "899"}
     revised_schema = captured["output_schema"]["properties"]["revised_candidate"]
     assert revised_schema == task().output_schema
+    assert "never repair an unsupported positive claim by asserting its negation" in prompts[0]
 
 
 def test_qwen_stack_uses_separate_role_adapters():

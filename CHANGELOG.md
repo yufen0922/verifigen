@@ -7,6 +7,8 @@
 - Support optional history-hidden re-judgment while preserving repair feedback and audit history.
 - Bound actual chunked request bytes and allow deletion of completed private workbench history.
 - Add concurrent-run isolation, cancellation, oscillation and repair-regression tests.
+- Clarify criteria-only judgment and unknown-versus-false evidence handling in Judge/Repair
+  prompts; publish a known-failure live recheck without changing historical benchmark results.
 
 - Add a live, local FastAPI workbench with SSE rounds, input editing, budgets, cancellation,
   private persisted history, export and actual benchmark records.

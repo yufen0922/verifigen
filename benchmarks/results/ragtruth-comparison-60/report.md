@@ -5,6 +5,8 @@ Each task contributes 20 responses, half clean and half hallucinated. These are 
 subset of the already evaluated 420-case cohort, not a new untouched holdout or production traffic.
 All material is retained. Qwen3.5-Flash executes the arms; Qwen-Plus reviews anonymous outputs.
 The protocol, source/code hashes and per-case records are published alongside this report.
+The recorded runtime is preserved in Git revision `597a032`. Later prompt corrections do not
+retroactively change this baseline or its proxy percentages.
 
 ## Observed Automatic Proxies
 
@@ -20,6 +22,7 @@ revision calls; the loop uses up to two repairs plus re-judgments. Review failur
 unverified, not positive. Runtime usage is unknown for one Judge-only call and four loop calls,
 so those token totals are lower bounds. Latency excludes queueing and external evaluator time.
 Total: **314 runtime calls + 148 external review calls = 462 calls**.
+External evaluation separately consumes 331,796 known tokens with no unknown-usage calls.
 
 **This pilot does not support a claim that the loop outperforms ordinary self-refinement.**
 Self-refinement has higher proxy yield and lower measured cost here. This unfavorable result is
@@ -31,7 +34,8 @@ evidence that its present semantic Judge is better than alternatives.
 
 The external evaluator agrees with original RAGTruth labels on **41/60 = 68.33%** of originals.
 Four original reviews fail protocol validation; 15 valid judgments disagree with human labels.
-Across all 148 unique packets, five reviews are unavailable. Qwen models can share family bias.
+Across all 148 unique packets, four reviews are unavailable; identical candidates can share one
+unavailable review across arms. Qwen models can share family bias.
 Grounding versus implicit-truth definitions and subjective aggregation may also differ.
 Automatic disagreements are not definitive proof that the corpus label is wrong.
 
@@ -53,6 +57,8 @@ This is a plausible repair regression requiring human confirmation, not a reused
 Improvement direction: explicitly preserve unknown/missing values, reject unsupported positive
 and negative claims alike, and test repairs that invert a claim rather than omit it. The original
 source and both candidates are available in `records.jsonl` and the frozen corpus.
+The subsequent [targeted recheck](../ragtruth-regression-8242/report.md) documents a prompt
+correction and the remaining evaluator disagreement, without changing this baseline.
 
 ### Evaluator disagrees with clean originals: Data2txt 8076 and 9587
 

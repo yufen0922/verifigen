@@ -106,6 +106,10 @@ Judge 必须返回：
 Repair 必须返回 `revised_candidate` 和 `change_summary`。Pydantic 校验额外字段、缺字段、
 未知状态和越界分数；协议异常不会被当作通过，而是 `judge_error` 或 `repair_error` 降级。
 
+Judge 只按显式 criteria 和输出 Schema 校验，不自行增加遗漏等未配置要求。
+Judge 与 Repair 均明确区分“字段缺失/没有证据”和“明确为否”：不能将无依据的肯定句修成
+同样无依据的否定句，来源中的不确定措辞也需保留。这是提示词层的约束，仍不是语义正确性的证明。
+
 ## 多场景适配
 
 核心运行时不导入任何业务领域模块。一个新场景通过 `QualityTask` 提供六项配置：`source`、
