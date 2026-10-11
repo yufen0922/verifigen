@@ -102,6 +102,22 @@ async def test_truncated_completion_is_rejected():
         ).generate(REQUEST)
 
 
+async def test_rejected_completion_keeps_reported_usage_and_redacted_category():
+    with pytest.raises(ProviderError) as exc:
+        await client(
+            lambda request: httpx.Response(
+                200,
+                json={
+                    "choices": [{"message": {"content": "secret-123"}, "finish_reason": "length"}],
+                    "usage": {"prompt_tokens": 100, "completion_tokens": 4096},
+                },
+            )
+        ).generate(REQUEST)
+    assert exc.value.usage.total_tokens == 4196
+    assert exc.value.category == "incomplete_response"
+    assert "secret-123" not in str(exc.value)
+
+
 async def test_malformed_response_is_redacted():
     with pytest.raises(ProviderError, match="failed"):
         await client(lambda request: httpx.Response(200, json={"private": "secret-123"})).generate(

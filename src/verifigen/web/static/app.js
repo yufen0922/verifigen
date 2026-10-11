@@ -26,6 +26,7 @@ const reasons = {
   judge_error: "Judge 调用或结构化协议失败",
   repair_error: "Repair 调用或结构化协议失败",
   generator_error: "生成调用失败",
+  refine_error: "自检修订调用失败",
   gate_error: "关卡执行失败",
   invalid_schema: "输出 Schema 无效",
   renderer_error: "输出渲染失败",
@@ -189,7 +190,7 @@ function event(event) {
     document
       .querySelectorAll("[data-stage]")
       .forEach((el) =>
-        el.classList.toggle("active", el.dataset.stage === detail.role),
+        el.classList.toggle("active", el.dataset.stage === (detail.role === "refine" ? "repair" : detail.role)),
       );
   }
   if (name === "gate_checked") {
@@ -199,8 +200,8 @@ function event(event) {
         el.classList.toggle("active", el.dataset.stage === "gate"),
       );
   }
-  if (name === "repair_committed") $("repair-count").textContent = detail.round;
-  if (name === "judged" || name === "call_finished") {
+  if (name === "repair_committed" || name === "initial_refined") $("repair-count").textContent = detail.round;
+  if (name === "judged" || name === "call_finished" || name === "call_failed") {
     if (detail.total_tokens != null) {
       const previous = $("token-count").dataset.total || "0";
       const value = Number(previous) + detail.total_tokens;
@@ -233,7 +234,7 @@ function event(event) {
         "span",
         `${time == null ? "—" : (time / 1000).toFixed(2) + "s"}  ${name}`,
       ),
-      node("span", detail.role || detail.action || detail.reason || ""),
+      node("span", [detail.role, detail.category, detail.action || detail.reason].filter(Boolean).join(" · ")),
     );
     $("event-log").append(line);
   }
@@ -306,6 +307,8 @@ async function start() {
       max_observed_tokens: $("tokens").value ? Number($("tokens").value) : null,
       score_patience: $("patience").value ? Number($("patience").value) : null,
       judge_history: $("judge-history").value,
+      initial_refinement: $("initial-refinement").checked,
+      max_protocol_retries: Number($("protocol-retries").value),
     };
     clearRun();
     $("token-count").dataset.total = "0";
@@ -402,10 +405,15 @@ function baselines() {
     $("baseline-note").textContent = "对照实验尚未发布。";
     return;
   }
-  const summary = baselineData.summary, config = summary.config;
+  const experiment = baselineData.experiments?.find((e) => e.id === $("baseline-experiment").value) || baselineData;
+  const summary = experiment.summary, config = summary.config;
   const percent = (v) => v == null ? "—" : `${(v * 100).toFixed(2)}%`;
   const labels = {direct: "直接输出", judge_only: "只校验",
-    self_refine: "普通自我修正", quality_loop: "完整闭环"};
+    self_refine: "普通自我修正", quality_loop: "完整闭环", refine_verify: "自检后闭环"};
+  const previousArm = $("baseline-arm").value;
+  $("baseline-arm").replaceChildren();
+  for (const arm of Object.keys(summary.arms)) $("baseline-arm").add(new Option(labels[arm], arm));
+  $("baseline-arm").value = previousArm in summary.arms ? previousArm : "quality_loop";
   $("baseline-note").textContent =
     `${config.selected_case_ids.length} 条均衡抽样 · ${config.model} · 评审 ${config.reviewer_model} · ` +
     `原稿人工标签一致率 ${percent(summary.reviewer_original_label_agreement.all_case_agreement)} · ` +
@@ -419,7 +427,7 @@ function baselines() {
     }
     $("baseline-metrics").append(tr);
   }
-  for (const r of baselineData.records.filter((r) => r.arm === $("baseline-arm").value)) {
+  for (const r of experiment.records.filter((r) => r.arm === $("baseline-arm").value)) {
     const tr = node("tr"), review = r.external_review?.review;
     for (const value of [r.id, r.task_type, r.initial_should_pass ? "正常" : "有错",
       r.status, review?.grounding || "—", review?.fulfillment || "—", r.model_calls]) {
@@ -456,6 +464,8 @@ async function openRun(id) {
     }
     $("generate").checked = stored.input.generate;
     $("judge-history").value = stored.input.judge_history || "full";
+    $("initial-refinement").checked = stored.input.initial_refinement || false;
+    $("protocol-retries").value = String(stored.input.max_protocol_retries ?? 1);
     $("initial").disabled = stored.input.generate;
     runId = id;
     record = stored;
@@ -586,6 +596,7 @@ $("refresh-history").addEventListener("click", history);
 $("evaluation-select").addEventListener("change", evaluation);
 $("evaluation-filter").addEventListener("change", evaluation);
 $("baseline-arm").addEventListener("change", baselines);
+$("baseline-experiment").addEventListener("change", baselines);
 $("close-dialog").addEventListener("click", () => $("record-dialog").close());
 $("export").addEventListener("click", () => {
   if (!record) return;
@@ -617,6 +628,9 @@ async function boot() {
     presets = p;
     evaluations = e;
     baselineData = b;
+    for (const experiment of b.experiments || [])
+      $("baseline-experiment").add(new Option(experiment.label, experiment.id));
+    if (b.default_id) $("baseline-experiment").value = b.default_id;
     $("model-label").textContent = config.model;
     $("connection-dot").classList.toggle("ready", config.configured);
     if (!config.configured)

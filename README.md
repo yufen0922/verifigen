@@ -21,8 +21,9 @@ VerifiGen turns a single model generation into a bounded quality loop:
 
 The Judge receives the original prompt, full business context, explicit criteria, current candidate,
 and prior verdicts. It returns `pass`, `fail`, or `unknown`, a score from 0 to 1, and a structured
-issue list. The Repairer receives the same context and only revises the reported problems; every
-revision must pass through the Judge again.
+issue list. The Repairer checks the feedback against source evidence, fixes reported problems and
+checks for other unsupported details while preserving supported content. Every revision must pass
+through the Judge again; previous verdicts are not treated as evidence.
 
 The Python runtime owns immutable context snapshots, Judge/Repair JSON protocols, call and repair
 budgets, deadlines, token limits, no-progress detection, metadata-only traces, and fail-closed
@@ -39,6 +40,8 @@ Every run keeps its own candidate, verdict history, gate reports, token observat
 | Release decisions | Pure decision policy, score threshold and opt-in score plateau termination | [QualityPolicy](src/verifigen/policy.py) |
 | Deterministic checks | Mandatory JSON Schema check plus pluggable async business gates; failures become repair feedback | [Gate protocol](src/verifigen/gates.py), [citation gate](src/verifigen/domains/rag_review.py) |
 | Failure handling | Bounded calls/rounds/time, repeated-candidate detection and fallback text selected by termination reason | [Runtime](src/verifigen/quality.py) |
+| Strategy choice | Optional evidence-first self-revision before judging, sharing the same revision/call/token ceilings | [Paired protocols](docs/comparative_evaluation.md) |
+| Protocol recovery | One budgeted retry for malformed agent JSON with known usage; redacted failure categories and retained billing observations | [Boundary tests](tests/test_quality_optimization.py) |
 | Auditability | Raw model verdicts, separate gate reports and metadata-only decision/configuration traces | [Behavior tests](tests/test_quality_controls.py) |
 
 See the [architecture and decision table](docs/architecture.md) and the

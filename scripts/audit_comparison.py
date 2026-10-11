@@ -5,7 +5,7 @@ import hashlib
 import json
 from pathlib import Path
 
-from verifigen.comparison import ARMS, blind_packets, select_cohort, summarize
+from verifigen.comparison import OPTIMIZED_ARMS, blind_packets, select_cohort, summarize
 from verifigen.ragtruth import read_jsonl
 
 
@@ -22,11 +22,19 @@ def main() -> None:
         config = json.loads((args.results / "config.json").read_text())
         if config["samples_sha256"] != hashlib.sha256(args.samples.read_bytes()).hexdigest():
             raise ValueError("Dataset hash differs")
-        samples = select_cohort(read_jsonl(args.samples), per_task=config["per_task"])
+        samples = select_cohort(
+            read_jsonl(args.samples),
+            per_task=config["per_task"],
+            split=config.get("split", "eval"),
+            excluded_sources=config.get("excluded_sources", []),
+        )
         if [s["id"] for s in samples] != config["selected_case_ids"]:
             raise ValueError("Cohort differs")
         records = read_jsonl(args.results / "records.jsonl")
-        expected = {(s["id"], arm) for s in samples for arm in ARMS}
+        arms = config["arms"]
+        if not arms or len(arms) != len(set(arms)) or not set(arms).issubset(OPTIMIZED_ARMS):
+            raise ValueError("Invalid arm configuration")
+        expected = {(s["id"], arm) for s in samples for arm in arms}
         actual = {(r["id"], r["arm"]) for r in records}
         if expected != actual or len(actual) != len(records):
             raise ValueError("Missing, duplicate or unexpected arm records")

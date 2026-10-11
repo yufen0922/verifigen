@@ -56,6 +56,32 @@ def test_cohort_is_reproducible_balanced_and_eval_only():
         select_cohort(rows, per_task=6)
 
 
+def test_dev_selection_and_source_exclusion_are_explicit_and_balanced():
+    rows = [
+        sample(str(index * 4 + label * 2 + n + 1), task, bool(label), "dev")
+        for index, task in enumerate(("QA", "Summary", "Data2txt"))
+        for label in (0, 1)
+        for n in (0, 1)
+    ]
+    excluded = [r["source_id"] for r in rows[::2]]
+    selected = select_cohort(rows, per_task=2, split="dev", excluded_sources=excluded)
+    assert len(selected) == 6 and sum(r["has_hallucination"] for r in selected) == 3
+    assert not set(excluded) & {r["source_id"] for r in selected}
+    with pytest.raises(ValueError):
+        select_cohort(rows, per_task=2, split="anything")
+
+
+async def test_refine_verify_arm_records_actual_edits_and_final_judge():
+    stack = SimpleNamespace(
+        generator=ReplayGenerator([{"answer": "paid 799"}]),
+        judge=ReplayJudge([JudgeVerdict("pass", 1, "Supported")]),
+        repairer=ReplayRepairer([]),
+    )
+    result = await run_arm(sample(), "refine_verify", stack, QualityBudget(), judge_history="none")
+    assert result["changed"] and result["runtime"]["repair_rounds"] == 1
+    assert result["runtime"]["rounds"][0]["verdict"]["status"] == "pass"
+
+
 async def test_baselines_publish_different_things_without_faking_judge_approval():
     bad = sample()
     stack = SimpleNamespace(

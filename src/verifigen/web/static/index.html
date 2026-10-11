@@ -194,10 +194,15 @@
                   <option value="full">保留判定</option>
                   <option value="none">隐藏判定</option>
                 </select></label>
+                <label>协议重试<select id="protocol-retries">
+                  <option value="1">最多 1 次</option>
+                  <option value="0">关闭</option>
+                </select></label>
               </div>
               <label class="toggle-label"
                 ><input id="citation-gate" type="checkbox" />引用 ID 关卡</label
               >
+              <label class="toggle-label"><input id="initial-refinement" type="checkbox" />先自检修订</label>
             </details>
           </section>
           <section class="execution">
@@ -331,7 +336,9 @@
         </div>
       </section>
       <section id="baselines-view" class="view" hidden>
-        <div class="section-title"><h1>RAGTruth · 方案对照</h1></div>
+        <div class="section-title"><h1>RAGTruth · 方案对照</h1>
+          <select id="baseline-experiment" aria-label="选择对照实验"></select>
+        </div>
         <p id="baseline-note" class="evaluation-note"></p>
         <div class="table-scroll">
           <table>

@@ -19,6 +19,13 @@ class Generator(Protocol):
 class ProviderError(RuntimeError):
     """Redacted provider failure; the HTTP body and credential are never included."""
 
+    def __init__(
+        self, message: str, *, category: str = "provider_error", usage: Usage | None = None
+    ) -> None:
+        super().__init__(message)
+        self.category = category
+        self.usage = usage or Usage()
+
 
 class ReplayGenerator:
     """An explicit replay double. It is not a model and has zero LLM token usage."""
@@ -100,6 +107,7 @@ class CompatibleChatGenerator:
         self.extra_body = options
 
     async def generate(self, request: GenerationRequest) -> Generation:
+        usage = Usage()
         try:
             import httpx
         except ImportError:
@@ -146,17 +154,6 @@ class CompatibleChatGenerator:
                 )
                 response.raise_for_status()
                 body = response.json()
-            choice = body["choices"][0]
-            # A truncated completion must not masquerade as a complete answer.
-            if choice.get("finish_reason") not in ("stop", None):
-                raise ProviderError("Provider did not finish a complete response")
-            content = choice["message"]["content"]
-            if not isinstance(content, str):
-                raise ProviderError("Provider returned no textual JSON candidate")
-            try:
-                candidate = json.loads(content)
-            except json.JSONDecodeError:
-                candidate = content  # Schema failure goes through normal repair control.
             raw_usage = body.get("usage") or {}
             input_tokens = raw_usage.get("prompt_tokens")
             output_tokens = raw_usage.get("completion_tokens")
@@ -174,10 +171,41 @@ class CompatibleChatGenerator:
                 cost = (
                     input_tokens * self.input_price + output_tokens * self.output_price
                 ) / 1_000_000
-            return Generation(candidate, Usage(input_tokens, output_tokens, cost), self.model)
+            usage = Usage(input_tokens, output_tokens, cost)
+            choice = body["choices"][0]
+            # Read usage before rejecting a completion: an invalid response is still billable.
+            if choice.get("finish_reason") not in ("stop", None):
+                raise ProviderError(
+                    "Provider did not finish a complete response",
+                    category="incomplete_response",
+                    usage=usage,
+                )
+            content = choice["message"]["content"]
+            if not isinstance(content, str):
+                raise ProviderError(
+                    "Provider returned no textual JSON candidate",
+                    category="invalid_response",
+                    usage=usage,
+                )
+            try:
+                candidate = json.loads(content)
+            except json.JSONDecodeError:
+                candidate = content  # Schema failure goes through normal repair control.
+            return Generation(candidate, usage, self.model)
         except ProviderError:
             raise
+        except httpx.TimeoutException:
+            raise ProviderError(
+                "Provider request failed; inspect provider-side logs privately", category="timeout"
+            ) from None
+        except httpx.HTTPStatusError:
+            raise ProviderError(
+                "Provider request failed; inspect provider-side logs privately",
+                category="http_error",
+            ) from None
         except Exception:
             raise ProviderError(
-                "Provider request failed; inspect provider-side logs privately"
+                "Provider request failed; inspect provider-side logs privately",
+                category="invalid_response",
+                usage=usage,
             ) from None

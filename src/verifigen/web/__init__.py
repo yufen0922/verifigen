@@ -62,6 +62,8 @@ class RunInput(BaseModel):
     max_observed_tokens: int | None = Field(default=None, gt=0, le=100000, strict=True)
     score_patience: int | None = Field(default=None, ge=1, le=3, strict=True)
     judge_history: Literal["full", "none"] = "full"
+    initial_refinement: bool = False
+    max_protocol_retries: int = Field(default=1, ge=0, le=1, strict=True)
 
     def task(self) -> QualityTask:
         if self.scenario == "support":
@@ -233,6 +235,8 @@ def create_app(
                 ),
                 policy=QualityPolicy(score_patience=payload.score_patience),
                 judge_history=payload.judge_history,
+                initial_refiner=agents.generator if payload.initial_refinement else None,
+                max_protocol_retries=payload.max_protocol_retries,
                 gates=(
                     *((CitationGate(),) if payload.citation_gate else ()),
                     *((SupportFactsGate(),) if payload.scenario == "support" else ()),

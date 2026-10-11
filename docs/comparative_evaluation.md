@@ -10,7 +10,7 @@ Every selected RAGTruth response enters all four arms with its full original evi
 | Arm | Behavior | Additional model calls |
 | --- | --- | --- |
 | `direct` | Publish the unmodified original | 0 |
-| `judge_only` | Run the actual score/Schema release gate without repairs | At most 1 |
+| `judge_only` | Run the actual score/Schema release gate without repairs | Normally 1; at most 2 with protocol retry |
 | `self_refine` | Two ordinary evidence-based self-revision calls, no separate Judge | At most 2 |
 | `quality_loop` | Judge, structured repair feedback, re-Judge and fail-closed output | At most 5 |
 
@@ -33,6 +33,35 @@ runtime and runner hashes, prompts, model aliases and ceilings. Resume rejects d
 models or configuration; aliases still do not identify immutable provider weights.
 
 ## Anonymous Automatic Review
+
+### Optimization Protocol
+
+`--optimized` adds `refine_verify`: one ordinary evidence-based revision, Judge, and optionally
+one targeted repair followed by a fresh Judge. Both edits share the existing two-revision ceiling;
+there is no free preliminary call. Normal execution uses two or four calls; protocol retries must
+still fit the common five-call ceiling. It is a hybrid strategy, not the original loop renamed.
+
+Use `--split dev --per-task 10` for a 30-case development diagnostic. Freeze prompts and runtime
+before collecting evaluation records. `--exclude-records PATH` excludes **all source groups** in
+the referenced experiment, not just response IDs. This keeps the optimization validation cohort
+separate from the previously investigated pilot. It is still drawn from the historical 420-case
+evaluation cohort, so it must not be described as a completely untouched holdout.
+
+```bash
+uv run --locked --extra llm python examples/ragtruth/compare.py \
+  --split dev --per-task 10 --optimized --judge-history none \
+  --output runs/optimized-dev-30
+uv run --locked --extra llm python examples/ragtruth/compare.py \
+  --per-task 20 --optimized --judge-history none \
+  --exclude-records benchmarks/results/ragtruth-comparison-60/records.jsonl \
+  --output runs/optimized-eval-60
+```
+
+The original pilot remains frozen and auditable. The second run re-executes **every baseline**
+on the same new cases; percentages across different cohorts are not paired improvements.
+Fresh judging hides previous verdicts in this profile, while Repair and audit keep feedback.
+One budgeted protocol retry is enabled, with known failed-call usage retained. Neither switch
+by itself proves improved semantic accuracy. Automatic review instructions are unchanged.
 
 Review packets contain only the original task, evidence and one candidate. They omit the arm,
 original hallucination label, span annotations, runtime verdict, score and repair history.

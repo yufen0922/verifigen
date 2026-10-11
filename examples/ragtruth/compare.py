@@ -12,6 +12,7 @@ from typing import Any
 
 from verifigen.comparison import (
     ARMS,
+    OPTIMIZED_ARMS,
     PROTOCOL,
     REVIEW_INSTRUCTIONS,
     SELF_REFINE_INSTRUCTIONS,
@@ -55,7 +56,18 @@ async def evaluate(args: argparse.Namespace) -> dict[str, Any]:
         deadline_seconds=120,
         max_observed_tokens=24000,
     )
-    samples = select_cohort(read_jsonl(args.samples), per_task=args.per_task)
+    excluded_sources = (
+        sorted({r["source_id"] for r in read_jsonl(args.exclude_records)})
+        if args.exclude_records
+        else []
+    )
+    arms = OPTIMIZED_ARMS if args.optimized else ARMS
+    samples = select_cohort(
+        read_jsonl(args.samples),
+        per_task=args.per_task,
+        split=args.split,
+        excluded_sources=excluded_sources,
+    )
     code_names = (
         "comparison.py",
         "agents.py",
@@ -79,7 +91,12 @@ async def evaluate(args: argparse.Namespace) -> dict[str, Any]:
         "temperature": 0,
         "max_output_tokens": 4096,
         "budget_ceiling": asdict(budget),
-        "arms": list(ARMS),
+        "arms": list(arms),
+        "split": args.split,
+        "excluded_sources": excluded_sources,
+        "judge_history": args.judge_history,
+        "max_protocol_retries": args.max_protocol_retries,
+        "refine_verify_initial_edits": 1 if args.optimized else 0,
         "self_refine_rounds": 2,
         "concurrency": args.concurrency,
         "prompt_hashes": {
@@ -101,7 +118,7 @@ async def evaluate(args: argparse.Namespace) -> dict[str, Any]:
             raise ValueError("Resume configuration or code fingerprint differs")
     write_json(config_path, config)
     records = read_jsonl(records_path) if records_path.exists() else []
-    expected = {(s["id"], arm) for s in samples for arm in ARMS}
+    expected = {(s["id"], arm) for s in samples for arm in arms}
     completed = {(r["id"], r["arm"]) for r in records}
     if len(completed) != len(records) or not completed.issubset(expected):
         raise ValueError("Duplicate or unexpected arm records")
@@ -109,7 +126,14 @@ async def evaluate(args: argparse.Namespace) -> dict[str, Any]:
 
     async def one(sample: dict[str, Any], arm: str) -> dict[str, Any]:
         async with semaphore:
-            return await run_arm(sample, arm, stack, budget)
+            return await run_arm(
+                sample,
+                arm,
+                stack,
+                budget,
+                judge_history=args.judge_history,
+                max_protocol_retries=args.max_protocol_retries,
+            )
 
     async def collect(tasks: list[asyncio.Task[Any]], path: Path, rows: list[Any]) -> None:
         try:
@@ -131,7 +155,7 @@ async def evaluate(args: argparse.Namespace) -> dict[str, Any]:
         [
             asyncio.create_task(one(s, arm))
             for s in samples
-            for arm in ARMS
+            for arm in arms
             if (s["id"], arm) not in completed
         ],
         records_path,
@@ -176,6 +200,11 @@ def main() -> None:
     parser.add_argument("--concurrency", type=int, default=6)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--resume", action="store_true")
+    parser.add_argument("--split", choices=("dev", "eval"), default="eval")
+    parser.add_argument("--exclude-records", type=Path)
+    parser.add_argument("--optimized", action="store_true")
+    parser.add_argument("--judge-history", choices=("full", "none"), default="full")
+    parser.add_argument("--max-protocol-retries", type=int, choices=(0, 1), default=1)
     args = parser.parse_args()
     if not 1 <= args.concurrency <= 16 or args.thinking_budget < 1:
         parser.error("Use concurrency 1..16 and a positive thinking budget")

@@ -108,6 +108,19 @@ def test_generator_path_really_runs_before_judge(client):
     assert record["result"]["repair_rounds"] == 0
 
 
+def test_web_initial_refinement_is_visible_budgeted_and_still_judged(client):
+    identifier = client.post(
+        "/api/runs",
+        json=payload(initial_refinement=True, judge_history="none"),
+    ).json()["id"]
+    record = client.get(f"/api/runs/{identifier}").json()
+    assert record["result"]["output"] == {"answer": "799"}
+    assert record["result"]["repair_rounds"] == 1
+    assert len(record["result"]["rounds"]) == 1
+    assert any(e["event"] == "initial_refined" for e in record["events"])
+    assert record["input"]["max_protocol_retries"] == 1
+
+
 def test_invalid_schema_fails_closed_before_judgment(client):
     identifier = client.post("/api/runs", json=payload(output_schema={"type": "invalid"})).json()[
         "id"
@@ -124,6 +137,8 @@ def test_invalid_schema_fails_closed_before_judgment(client):
         {"min_pass_score": 2},
         {"criteria": []},
         {"judge_history": "invalid"},
+        {"max_protocol_retries": 2},
+        {"max_protocol_retries": True},
         {"criteria": [{"id": "x", "description": "a"}, {"id": "x", "description": "b"}]},
     ],
 )

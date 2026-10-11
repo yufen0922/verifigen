@@ -22,6 +22,16 @@ ignored and the Generator runs first. Otherwise Judge evaluates the supplied dra
 repair must be judged again. Only the final release surface contains approved output or fallback.
 Drafts and intermediate verdicts are visible to the operator, not intended for end users.
 
+`initial_refinement=true` optionally performs one evidence-based self-revision before the first
+Judge. It consumes one revision round and one model call, even if unchanged; it does not count
+as verification. With the two-round default, at most one subsequent targeted repair remains.
+The default stays disabled so callers can choose whether to rewrite an apparently good draft.
+
+`max_protocol_retries=1` permits one retry per Judge/Repair operation after an invalid structured
+response with known usage. Every attempt counts against calls, tokens and the original deadline.
+Semantic FAIL/UNKNOWN, HTTP errors, incomplete completions and unknown billing are not retried.
+Set it to zero to disable. Error traces contain a redacted category and usage, never raw responses.
+
 The browser consumes SSE observations with sequence IDs; reconnecting replays missing events.
 `round_complete` contains both the model verdict and the effective verdict after hard gates.
 Core metadata traces still exclude task text. Observer exceptions cannot change loop decisions.
@@ -42,7 +52,7 @@ percentage with `ReportFactsGate`. These gates do not claim to prove arbitrary s
 | `DELETE /api/runs/{id}` | Delete a completed record from local disk and memory; active runs return 409 |
 | `GET /api/history` | Latest 100 records across service restarts |
 | `GET /api/evaluations` | Published actual evaluations; never a replay score |
-| `GET /api/comparison` | Four-arm paired pilot with explicitly labeled external-model proxies |
+| `GET /api/comparison` | Versioned paired experiments with explicitly labeled external-model proxies |
 | `GET /openapi.json` | Request/response schemas |
 
 Three concurrent runs, at most seven calls and two repair rounds per run, a 180-second deadline,

@@ -6,14 +6,14 @@ import asyncio
 import json
 import time
 import uuid
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 from dataclasses import asdict, replace
 from pathlib import Path
 from typing import Any, Literal
 
-from .agents import Judge, Repairer
+from .agents import SELF_REFINE_INSTRUCTIONS, AgentResponseError, Judge, Repairer
 from .gates import CandidateGate, SchemaGate
-from .generators import Generator
+from .generators import Generator, ProviderError
 from .jsonutil import digest, json_copy
 from .policy import QualityPolicy
 from .review import (
@@ -46,9 +46,13 @@ class QualityLoop:
         policy: QualityPolicy | None = None,
         gates: tuple[CandidateGate, ...] = (),
         judge_history: Literal["full", "none"] = "full",
+        initial_refiner: Generator | None = None,
+        max_protocol_retries: int = 1,
     ) -> None:
         if judge_history not in ("full", "none"):
             raise ValueError("judge_history must be full or none")
+        if type(max_protocol_retries) is not int or not 0 <= max_protocol_retries <= 1:
+            raise ValueError("max_protocol_retries must be 0 or 1")
         self.judge = judge
         self.repairer = repairer
         self.generator = generator
@@ -56,6 +60,8 @@ class QualityLoop:
         self.policy = policy or QualityPolicy()
         self.gates = tuple(gates)
         self.judge_history = judge_history
+        self.initial_refiner = initial_refiner
+        self.max_protocol_retries = max_protocol_retries
 
     async def run(
         self,
@@ -198,28 +204,62 @@ class QualityLoop:
             nonlocal in_flight_model_calls
             in_flight_model_calls -= cost
 
+        async def invoke(component: Any, role: str, operation: Callable[[], Awaitable[Any]]) -> Any:
+            for attempt in range(self.max_protocol_retries + 1):
+                cost = reserve(component, role)
+                try:
+                    response = await operation()
+                except asyncio.CancelledError:
+                    raise
+                except Exception as exc:
+                    usage = (
+                        exc.usage
+                        if isinstance(exc, (AgentResponseError, ProviderError))
+                        else Usage()
+                    )
+                    if cost:
+                        usages.append(usage)
+                    complete(cost)
+                    category = (
+                        "invalid_agent_response"
+                        if isinstance(exc, AgentResponseError)
+                        else exc.category
+                        if isinstance(exc, ProviderError)
+                        else "component_error"
+                    )
+                    emit(
+                        "call_failed", role=role, category=category, total_tokens=usage.total_tokens
+                    )
+                    # Only protocol failures with known billing can be retried safely. No
+                    # retries of business FAIL/UNKNOWN, HTTP failures or unknown usage.
+                    if (
+                        isinstance(exc, AgentResponseError)
+                        and usage.total_tokens is not None
+                        and attempt < self.max_protocol_retries
+                    ):
+                        emit("protocol_retry", role=role, attempt=attempt + 1)
+                        continue
+                    raise RuntimeError(role + "_error") from None
+                complete(cost)
+                usages.append(response.usage)
+                return response
+            raise AssertionError("Unreachable protocol retry state")
+
         async def create_candidate() -> Any:
             if self.generator is None:
                 raise RuntimeError("generator_unavailable")
-            cost = reserve(self.generator, "generator")
-            try:
-                generated = await self.generator.generate(
+            generated = await invoke(
+                self.generator,
+                "generator",
+                lambda: self.generator.generate(  # type: ignore[union-attr]
                     GenerationRequest(
                         source=json_copy(task.source),
                         prompt=task.prompt,
                         output_schema=json_copy(task.output_schema),
                         instructions=task.instructions,
                     )
-                )
-            except asyncio.CancelledError:
-                raise
-            except Exception:
-                if cost:
-                    usages.append(Usage())
-                complete(cost)
-                raise RuntimeError("generator_error") from None
-            complete(cost)
-            usages.append(generated.usage)
+                ),
+            )
             emit(
                 "call_finished",
                 role="generator",
@@ -230,25 +270,18 @@ class QualityLoop:
 
         async def judge(candidate: Any, round_index: int) -> JudgeVerdict:
             nonlocal best_candidate, best_score
-            cost = reserve(self.judge, "judge")
-            try:
-                response = await self.judge.judge(
+            response = await invoke(
+                self.judge,
+                "judge",
+                lambda: self.judge.judge(
                     JudgeRequest(
                         task_snapshot(),
                         json_copy(candidate),
                         round_index,
                         tuple(feedback_history) if self.judge_history == "full" else (),
                     )
-                )
-            except asyncio.CancelledError:
-                raise
-            except Exception:
-                if cost:
-                    usages.append(Usage())
-                complete(cost)
-                raise RuntimeError("judge_error") from None
-            complete(cost)
-            usages.append(response.usage)
+                ),
+            )
             verdicts.append(response.verdict)
             if response.verdict.score > best_score:
                 best_score = response.verdict.score
@@ -265,9 +298,10 @@ class QualityLoop:
             return response.verdict
 
         async def repair(candidate: Any, verdict: JudgeVerdict, round_index: int) -> Any:
-            cost = reserve(self.repairer, "repair")
-            try:
-                response = await self.repairer.repair(
+            response = await invoke(
+                self.repairer,
+                "repair",
+                lambda: self.repairer.repair(
                     RepairRequest(
                         task_snapshot(),
                         json_copy(candidate),
@@ -275,16 +309,8 @@ class QualityLoop:
                         round_index,
                         tuple(feedback_history),
                     )
-                )
-            except asyncio.CancelledError:
-                raise
-            except Exception:
-                if cost:
-                    usages.append(Usage())
-                complete(cost)
-                raise RuntimeError("repair_error") from None
-            complete(cost)
-            usages.append(response.usage)
+                ),
+            )
             emit(
                 "call_finished",
                 role="repair",
@@ -302,6 +328,8 @@ class QualityLoop:
                 budget=asdict(self.budget),
                 policy=asdict(self.policy),
                 judge_history=self.judge_history,
+                initial_refinement=self.initial_refiner is not None,
+                max_protocol_retries=self.max_protocol_retries,
             )
             try:
                 gates = (SchemaGate(task.output_schema), *self.gates)
@@ -316,6 +344,41 @@ class QualityLoop:
             best_candidate = json_copy(candidate)
             observe("candidate", round=0, candidate=candidate)
             seen = {digest(candidate)}
+
+            if self.initial_refiner is not None:
+                if self.budget.max_repair_rounds == 0:
+                    return finish("repair_budget")
+                repair_rounds += 1
+                try:
+                    refined = await invoke(
+                        self.initial_refiner,
+                        "refine",
+                        lambda: self.initial_refiner.generate(  # type: ignore[union-attr]
+                            GenerationRequest(
+                                source=json_copy(task.source),
+                                prompt=task.prompt,
+                                output_schema=json_copy(task.output_schema),
+                                instructions=SELF_REFINE_INSTRUCTIONS + "\n" + task.instructions,
+                                previous=json_copy(candidate),
+                            )
+                        ),
+                    )
+                    proposed = json_copy(refined.content)
+                except (TypeError, ValueError):
+                    return finish("candidate_not_json")
+                except RuntimeError as exc:
+                    return finish(str(exc))
+                emit(
+                    "call_finished",
+                    role="refine",
+                    provider=refined.provider,
+                    total_tokens=refined.usage.total_tokens,
+                )
+                emit("initial_refined", changed=proposed != candidate, round=repair_rounds)
+                candidate = proposed
+                best_candidate = json_copy(candidate)
+                seen.add(digest(candidate))
+                observe("candidate", round=repair_rounds, candidate=candidate)
 
             while True:
                 try:

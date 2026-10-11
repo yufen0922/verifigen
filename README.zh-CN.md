@@ -21,7 +21,8 @@ VerifiGen 把一次大模型生成变成一个有边界的质量闭环：
 
 Judge 不是只看最终答案。它同时拿到原始 prompt、完整业务上下文、逐项质量标准、
 当前候选和历史判定，返回 `pass/fail/unknown`、0～1 分数以及结构化问题清单。
-Repair 拿到同一份上下文和 Judge 问题，只修改错误内容，然后必须重新经过 Judge。
+Repair 拿到同一份上下文和 Judge 问题，先核对反馈是否有证据支持，再修复错误并检查其他无依据
+细节，保留正确内容。每次修改后必须重新经过 Judge；历史判定不作为事实证据。
 
 程序层负责上下文快照、Judge/Repair JSON 协议、调用次数、修复轮次、超时、Token 阈值、重复答案
 检测、Trace 和降级；事实语义、完整性、相关性和表达正确性由 LLM 判断。
@@ -36,6 +37,8 @@ Repair 拿到同一份上下文和 Judge 问题，只修改错误内容，然后
 | 评分决策 | 可单独测试的决策策略、评分阈值、可选的连续评分无提升终止 | [QualityPolicy](src/verifigen/policy.py) |
 | 输出关卡 | 必经的 JSON Schema 校验、可插拔异步业务校验，失败问题进入修复 | [关卡协议](src/verifigen/gates.py)、[引用校验](src/verifigen/domains/rag_review.py) |
 | 异常兜底 | 限制调用、轮次与耗时，检测重复候选，按终止原因选择场景文案 | [运行时](src/verifigen/quality.py) |
+| 策略选择 | 可选先自检修订再校验，与定向修复共享轮次、调用和 Token 预算 | [对照协议](docs/comparative_evaluation.md) |
+| 协议恢复 | 已知用量的结构化协议失败最多重试一次，每次尝试计费并受预算约束，保留脱敏错误类别 | [边界测试](tests/test_quality_optimization.py) |
 | 可观测性 | 保留原始模型判定、独立关卡报告，记录不含正文的配置与决策 Trace | [行为测试](tests/test_quality_controls.py) |
 
 阅读顺序：[架构与决策表](docs/architecture.md) → [接入新场景](docs/scenario_integration.md) →
