@@ -150,6 +150,17 @@ function addRound(round) {
       ),
     );
   body.append(node("p", round.effective_verdict.summary, "round-summary"));
+  if (round.assessments?.length) {
+    const checks = node("details");
+    checks.append(node("summary", `事实与规则核查 · ${round.assessments.length} 项`));
+    for (const check of round.assessments) {
+      const block = node("div", undefined, "issue");
+      block.append(node("strong", `${check.criterion_id} · ${check.status}`),
+        node("p", check.statement), node("p", check.evidence, "evidence"));
+      checks.append(block);
+    }
+    body.append(checks);
+  }
   for (const issue of round.effective_verdict.issues) {
     const block = node("div", undefined, "issue");
     block.append(node("strong", issue.criterion_id), node("p", issue.message));
@@ -315,6 +326,9 @@ async function start() {
       max_protocol_retries: Number($("protocol-retries").value),
       enable_thinking: $("thinking-mode").value === "true",
       validate_judge_quotes: $("validate-quotes").checked,
+      judge_strategy: $("judge-strategy").value,
+      refinement_mode: $("refinement-mode").value,
+      check_fulfillment: $("check-fulfillment").checked,
     };
     clearRun();
     $("token-count").dataset.total = "0";
@@ -424,6 +438,8 @@ function baselines() {
     `${config.selected_case_ids.length} 条均衡抽样 · ${config.split === "dev" ? "开发诊断" : "评测"} · ` +
     `生成/修复 ${config.model} · Judge ${config.judge_model || config.model} · 评审 ${config.reviewer_model} · ` +
     `模式 ${config.enable_thinking === false ? "非思考" : "思考"} · ` +
+    `Judge 策略 ${config.judge_strategy === "claims" ? "逐项事实" : "整体判定"} · ` +
+    `任务完成度 ${config.check_fulfillment ? "开启" : "关闭"} · ` +
     `原稿人工标签一致率 ${percent(summary.reviewer_original_label_agreement.all_case_agreement)} · ` +
     "预算上限相同，实际消耗不同；自动评审为代理指标，人工双人盲审待完成。不同实验样本不同，不可直接相减。";
   for (const [arm, m] of Object.entries(summary.arms)) {
@@ -476,6 +492,9 @@ async function openRun(id) {
     $("protocol-retries").value = String(stored.input.max_protocol_retries ?? 1);
     $("thinking-mode").value = String(stored.input.enable_thinking ?? true);
     $("validate-quotes").checked = stored.input.validate_judge_quotes || false;
+    $("judge-strategy").value = stored.input.judge_strategy || "verdict";
+    $("refinement-mode").value = stored.input.refinement_mode || "edit";
+    $("check-fulfillment").checked = stored.input.check_fulfillment || false;
     $("initial").disabled = stored.input.generate;
     runId = id;
     record = stored;

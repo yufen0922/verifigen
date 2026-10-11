@@ -66,8 +66,13 @@ class RunInput(BaseModel):
     max_protocol_retries: int = Field(default=1, ge=0, le=1, strict=True)
     enable_thinking: bool = False
     validate_judge_quotes: bool = False
+    judge_strategy: Literal["verdict", "claims"] = "verdict"
+    refinement_mode: Literal["edit", "source_first"] = "edit"
+    check_fulfillment: bool = False
 
     def task(self) -> QualityTask:
+        if self.judge_strategy == "claims" and self.validate_judge_quotes:
+            raise ValueError("逐项事实判定不支持严格引文模式")
         if self.scenario == "support":
             SupportSource.model_validate(self.source)
         elif self.scenario == "report":
@@ -78,12 +83,26 @@ class RunInput(BaseModel):
                 not isinstance(c, dict) or not isinstance(c.get("chunk_id"), str) for c in chunks
             ):
                 raise ValueError("引用关卡需要带 chunk_id 的 retrieved_chunks")
+        criteria = tuple(Criterion(c.id, c.description) for c in self.criteria)
+        if self.check_fulfillment and not any(c.id == "fulfillment" for c in criteria):
+            criteria += (
+                Criterion(
+                    "fulfillment",
+                    "Substantively answer the original task using source evidence. "
+                    "Preserve the essential answer and explicit task constraints; "
+                    "do not require every source detail or invent coverage quotas.",
+                ),
+            )
         return QualityTask(
             source=self.source,
             prompt=self.prompt,
-            criteria=tuple(Criterion(c.id, c.description) for c in self.criteria),
+            criteria=criteria,
             output_schema=self.output_schema,
-            instructions=self.instructions,
+            instructions=self.instructions.replace(
+                "Evaluate factual grounding only.", "Evaluate all supplied explicit criteria."
+            )
+            if self.check_fulfillment
+            else self.instructions,
             fallback_text=self.fallback_text,
             fallback_by_reason=self.fallback_by_reason,
             renderer=render_support
@@ -239,6 +258,7 @@ def create_app(
                 judge_history=payload.judge_history,
                 initial_refiner=agents.generator if payload.initial_refinement else None,
                 max_protocol_retries=payload.max_protocol_retries,
+                refinement_mode=payload.refinement_mode,
                 gates=(
                     *((CitationGate(),) if payload.citation_gate else ()),
                     *((SupportFactsGate(),) if payload.scenario == "support" else ()),
@@ -274,6 +294,7 @@ def create_app(
             agents = stack or configured.stack(
                 enable_thinking=payload.enable_thinking,
                 validate_judge_quotes=payload.validate_judge_quotes,
+                judge_strategy=payload.judge_strategy,
             )
         except ValueError as exc:
             raise HTTPException(422, str(exc)) from None

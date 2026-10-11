@@ -202,12 +202,21 @@
                   <option value="false">非思考</option>
                   <option value="true">思考</option>
                 </select></label>
+                <label>Judge 策略<select id="judge-strategy">
+                  <option value="verdict">整体判定</option>
+                  <option value="claims">逐项事实（实验）</option>
+                </select></label>
+                <label>初始修订<select id="refinement-mode">
+                  <option value="edit">修订初稿</option>
+                  <option value="source_first">原材料优先（实验）</option>
+                </select></label>
               </div>
               <label class="toggle-label"
                 ><input id="citation-gate" type="checkbox" />引用 ID 关卡</label
               >
               <label class="toggle-label"><input id="initial-refinement" type="checkbox" />先自检修订</label>
               <label class="toggle-label"><input id="validate-quotes" type="checkbox" />严格引文校验（实验）</label>
+              <label class="toggle-label"><input id="check-fulfillment" type="checkbox" />任务完成度关卡</label>
             </details>
           </section>
           <section class="execution">

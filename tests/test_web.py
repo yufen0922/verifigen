@@ -121,6 +121,34 @@ def test_web_initial_refinement_is_visible_budgeted_and_still_judged(client):
     assert record["input"]["max_protocol_retries"] == 1
 
 
+def test_experimental_modes_are_saved_and_fulfillment_is_an_explicit_criterion(client):
+    identifier = client.post(
+        "/api/runs",
+        json=payload(
+            initial_refinement=True,
+            refinement_mode="source_first",
+            judge_strategy="claims",
+            check_fulfillment=True,
+        ),
+    ).json()["id"]
+    record = client.get(f"/api/runs/{identifier}").json()
+    assert record["input"]["judge_strategy"] == "claims"
+    assert record["input"]["refinement_mode"] == "source_first"
+    started = next(e for e in record["events"] if e["event"] == "started")
+    assert started["details"]["criteria"] == ["grounding", "fulfillment"]
+
+
+def test_incompatible_judge_flags_fail_before_execution(client):
+    response = client.post(
+        "/api/runs",
+        json=payload(
+            judge_strategy="claims",
+            validate_judge_quotes=True,
+        ),
+    )
+    assert response.status_code == 422
+
+
 def test_invalid_schema_fails_closed_before_judgment(client):
     identifier = client.post("/api/runs", json=payload(output_schema={"type": "invalid"})).json()[
         "id"

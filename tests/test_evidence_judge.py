@@ -38,7 +38,8 @@ def check(status="pass", criterion="grounding"):
         ("pass", "pass", "pass"),
         ("fail", "pass", "fail"),
         ("pass", "fail", "fail"),
-        ("unknown", "pass", "unknown"),
+        ("unknown", "pass", "fail"),
+        ("pass", "unknown", "unknown"),
     ],
 )
 async def test_claim_verdict_is_aggregated_and_every_assessment_is_retained(
@@ -56,7 +57,7 @@ async def test_claim_verdict_is_aggregated_and_every_assessment_is_retained(
     assert response.verdict.status == status
     assert len(response.assessments) == 2
     assert [a.kind for a in response.assessments] == ["claim", "criterion"]
-    assert len(response.verdict.issues) == (claim == "fail") + (criterion == "fail")
+    assert len(response.verdict.issues) == (claim != "pass") + (criterion == "fail")
     assert response.verdict.score == (1 if status == "pass" else 0)
 
 
@@ -96,6 +97,39 @@ async def test_fulfillment_failure_cannot_be_published_and_checks_reach_trace():
     assert result.output is None and result.reason == "repair_budget"
     assert len(result.rounds[0].assessments) == 3
     assert len(result.to_dict()["rounds"][0]["assessments"]) == 3
+
+
+async def test_empty_claims_are_repairable_for_failed_task_but_never_allow_publication():
+    for criterion, expected in (("fail", "fail"), ("unknown", "unknown"), ("pass", None)):
+        judge = EvidenceJudge(
+            FunctionGenerator(
+                lambda request: {
+                    "claims": [],
+                    "criteria": [check(criterion)],
+                }
+            )
+        )
+        if expected is None:
+            with pytest.raises(AgentResponseError):
+                await judge.judge(JudgeRequest(TASK, {"answer": ""}, 0))
+        else:
+            response = await judge.judge(JudgeRequest(TASK, {"answer": ""}, 0))
+            assert response.verdict.status == expected
+
+
+async def test_claim_uncertainty_can_be_repaired_but_cannot_escape_a_final_check():
+    def assess(request):
+        status = "pass" if request.previous == {"answer": "799"} else "unknown"
+        return {"claims": [check(status)], "criteria": [check()]}
+
+    result = await QualityLoop(
+        judge=EvidenceJudge(FunctionGenerator(assess)),
+        repairer=ReplayRepairer([{"answer": "799"}]),
+    ).run(TASK, initial={"answer": "799 plus an unsupported attribute"})
+    assert result.output == {"answer": "799"} and result.repair_rounds == 1
+    assert result.rounds[0].verdict.status == "fail"
+    assert result.rounds[0].assessments[0].status == "unknown"
+    assert result.rounds[1].verdict.status == "pass"
 
 
 async def test_source_first_refinement_preserves_evidence_and_existing_shared_budgets():

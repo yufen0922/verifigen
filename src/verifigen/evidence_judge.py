@@ -28,7 +28,7 @@ class _Assessment(BaseModel):
 class _EvidencePayload(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    claims: list[_Assessment] = Field(min_length=1, max_length=40)
+    claims: list[_Assessment] = Field(default_factory=list, max_length=40)
     criteria: list[_Assessment] = Field(min_length=1, max_length=32)
 
 
@@ -63,16 +63,21 @@ class EvidenceJudge(LLMJudge):
                     "the current candidate, grouping closely related facts in at most 40 rows. "
                     "Check subject, attribute, numbers, dates, attribution, polarity, frequency "
                     "and uncertainty against relevant evidence across ALL supplied passages/records. "
-                    "For each row, pass means supported, fail means a concrete unsupported or "
-                    "contradictory claim, unknown means evidence itself is insufficient or "
-                    "contradictory. Lack of source support for a specific asserted fact is fail, "
-                    "not unknown. Missing evidence cannot establish a negative assertion. "
+                    "For each claim, pass means supported, fail means unsupported or contradictory, "
+                    "unknown means this particular claim cannot be resolved. An unverified claim "
+                    "must be removed or qualified during repair; it is not evidence of truth. "
+                    "Missing evidence cannot establish a negative assertion. "
                     "Allow faithful paraphrases and defensible implicit truths; do not require "
                     "literal wording matches. Attribute a single review to its author rather than "
                     "the population. A past candidate/Judge opinion is NOT evidence. Evidence "
                     "must name the source facts that justify the FINAL status, not deliberation. "
                     "Never label a supported fact fail merely to find an error. In criteria, "
                     "return EXACTLY one row per supplied criterion ID, with its actual result. "
+                    "Criterion unknown is reserved for unavailable/contradictory source material "
+                    "that prevents fulfilling the TASK itself. A missing optional source attribute "
+                    "is a repairable unverified assertion, not globally unavailable evidence. "
+                    "Return claims even when a criterion fails; claims may be empty only if "
+                    "there are no factual assertions, and must never accompany an all-pass result. "
                     "Only assess task fulfillment when it is an explicit criterion. A substantive "
                     "summary need not enumerate every source detail; do not invent coverage quotas "
                     "or stricter length requirements. Preserve the source's main point and the "
@@ -100,8 +105,12 @@ class EvidenceJudge(LLMJudge):
             if any(a.criterion_id not in allowed for a in payload.claims):
                 raise ValueError("Unexpected claim criterion")
             checks = [*payload.claims, *payload.criteria]
-            failed = [a for a in checks if a.status == "fail"]
-            uncertain = any(a.status == "unknown" for a in checks)
+            if not payload.claims and all(a.status == "pass" for a in payload.criteria):
+                raise ValueError("Passing candidate has no assessed claims")
+            failed = [a for a in checks if a.status == "fail"] + [
+                a for a in payload.claims if a.status == "unknown"
+            ]
+            uncertain = any(a.status == "unknown" for a in payload.criteria)
             status: Literal["pass", "fail", "unknown"] = (
                 "unknown" if uncertain else "fail" if failed else "pass"
             )
@@ -122,7 +131,18 @@ class EvidenceJudge(LLMJudge):
                 f"{len(payload.claims)} claim checks; {len(payload.criteria)} criteria; "
                 f"{len(failed)} failures. Aggregated result: {status}.",
                 tuple(
-                    JudgeIssue(a.criterion_id, a.statement, a.evidence, a.suggestion)
+                    JudgeIssue(
+                        a.criterion_id,
+                        a.statement,
+                        a.evidence,
+                        a.suggestion
+                        or (
+                            "Remove or explicitly qualify this unverified claim; do not invent "
+                            "missing facts or delete supported task-essential content."
+                            if a.status == "unknown"
+                            else ""
+                        ),
+                    )
                     for a in failed
                 ),
             )
