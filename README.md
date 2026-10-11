@@ -51,13 +51,13 @@ See the [architecture and decision table](docs/architecture.md) and the
 ## Model adapter
 
 The live examples and workbench use Alibaba Cloud Bailian's OpenAI-compatible API and default to `qwen3.5-flash`
-with thinking enabled:
+in non-thinking JSON mode for structured-output reliability:
 
 ```python
 stack = make_qwen3_8b_stack(
     api_key=os.environ["DASHSCOPE_API_KEY"],
     model="qwen3.5-flash",
-    thinking_budget=2048,
+    enable_thinking=False,
 )
 loop = QualityLoop(
     generator=stack.generator,
@@ -69,6 +69,11 @@ loop = QualityLoop(
 Generator, Judge, and Repairer use separate adapters. They may share one model, as above, or be
 configured independently. API keys are accepted only through runtime arguments or environment
 variables and are never written to source files or quality traces.
+
+The legacy factory keeps its thinking-enabled default for compatibility; `ModelSettings.stack()`
+and the workbench default to non-thinking mode. Enable it explicitly for an ablation, not as a
+guarantee of better judging. [Bailian's structured-output documentation](https://help.aliyun.com/en/model-studio/qwen-structured-output)
+notes that Qwen3.5 thinking-mode JSON responses can violate the requested format.
 
 ## Quick start
 

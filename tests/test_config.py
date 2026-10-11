@@ -24,6 +24,16 @@ def test_missing_api_key_fails_before_request():
         ModelSettings(api_key="").stack()
 
 
+def test_current_stack_defaults_to_json_compatible_mode_and_supports_role_choice():
+    stack = ModelSettings(api_key="test-secret").stack(judge_model="separate-judge")
+    assert stack.generator.extra_body == {"enable_thinking": False}
+    assert stack.judge.generator.model == "separate-judge"
+    assert stack.generator.model == stack.repairer.generator.model == "qwen3.5-flash"
+    assert not stack.judge.validate_quotes
+    thinking = ModelSettings(api_key="test-secret").stack(enable_thinking=True)
+    assert thinking.generator.extra_body == {"enable_thinking": True, "thinking_budget": 1024}
+
+
 def test_doctor_reports_configuration_without_credentials(tmp_path):
     env_file = tmp_path / "local.env"
     env_file.write_text("DASHSCOPE_API_KEY=private-fixture\nDASHSCOPE_MODEL=test-model\n")

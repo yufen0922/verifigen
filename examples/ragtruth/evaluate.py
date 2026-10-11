@@ -21,7 +21,11 @@ ROOT = Path(__file__).resolve().parents[2]
 
 async def evaluate(args: argparse.Namespace) -> dict[str, Any]:
     settings = ModelSettings.from_env(ROOT / ".env.local")
-    stack = settings.stack(thinking_budget=args.thinking_budget)
+    stack = settings.stack(
+        thinking_budget=args.thinking_budget,
+        enable_thinking=args.enable_thinking,
+        validate_judge_quotes=args.validate_judge_quotes,
+    )
     budget = QualityBudget(
         max_model_calls=args.max_model_calls,
         max_repair_rounds=args.max_repair_rounds,
@@ -47,6 +51,8 @@ async def evaluate(args: argparse.Namespace) -> dict[str, Any]:
         "split": args.split,
         "limit_per_task": args.limit_per_task,
         "thinking_budget": args.thinking_budget,
+        "enable_thinking": args.enable_thinking,
+        "validate_judge_quotes": args.validate_judge_quotes,
         "budget": asdict(budget),
         "selected_case_ids": [r["id"] for r in selected],
     }
@@ -127,6 +133,8 @@ def main() -> None:
     parser.add_argument("--split", choices=("dev", "eval"), default="eval")
     parser.add_argument("--limit-per-task", type=int, required=True)
     parser.add_argument("--thinking-budget", type=int, default=1024)
+    parser.add_argument("--enable-thinking", action="store_true")
+    parser.add_argument("--validate-judge-quotes", action="store_true")
     parser.add_argument("--concurrency", type=int, default=4)
     parser.add_argument("--max-model-calls", type=int, default=5)
     parser.add_argument("--max-repair-rounds", type=int, default=2)

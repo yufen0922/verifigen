@@ -31,6 +31,15 @@ The default stays disabled so callers can choose whether to rewrite an apparentl
 response with known usage. Every attempt counts against calls, tokens and the original deadline.
 Semantic FAIL/UNKNOWN, HTTP errors, incomplete completions and unknown billing are not retried.
 Set it to zero to disable. Error traces contain a redacted category and usage, never raw responses.
+Retries explicitly tell Judge/Repair that the previous attempt failed protocol validation;
+they do not include the invalid raw response or change the original candidate/evidence.
+
+The default `enable_thinking=false` follows the provider's documented JSON-mode support.
+The advanced panel can enable thinking as an ablation. `validate_judge_quotes=true` is experimental:
+each failure must quote an actual candidate fragment, and non-empty source quotes must occur in
+the source snapshot (whitespace normalized). An unsupported claim may have no source quotation.
+Quote presence is not proof of entailment or complete claim coverage. The strict protocol is off
+by default because its development experiment increased fallback and token use.
 
 The browser consumes SSE observations with sequence IDs; reconnecting replays missing events.
 `round_complete` contains both the model verdict and the effective verdict after hard gates.

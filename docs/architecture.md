@@ -105,6 +105,12 @@ Judge 必须返回：
 
 Repair 必须返回 `revised_candidate` 和 `change_summary`。Pydantic 校验额外字段、缺字段、
 未知状态和越界分数；协议异常不会被当作通过，而是 `judge_error` 或 `repair_error` 降级。
+已知用量的协议失败允许最多一次显式重试，各次均计入调用和 Token 预算，并共享原始截止时间。
+重试会提示协议验证失败，不将原始坏响应作为业务证据。业务 FAIL/UNKNOWN 不属于协议重试。
+
+可选 `LLMJudge(validate_quotes=True)` 为问题增加 `candidate_quote` 和 `source_quote`：程序检查
+候选引文存在、非空来源引文存在；缺乏依据的断言可以不提供来源引文。只归一化空白，不纠正
+模型编造的引文，也不声称字符串匹配证明了事实关系。严格模式仍属实验，默认关闭。
 
 Judge 只按显式 criteria 和输出 Schema 校验，不自行增加遗漏等未配置要求。
 Judge 与 Repair 均明确区分“字段缺失/没有证据”和“明确为否”：不能将无依据的肯定句修成
@@ -138,6 +144,11 @@ Judge 通过后把结构化候选转换为用户可见文本；渲染失败会�
 
 生成、Judge、Repair 三个角色不共享对话历史，只共享显式的 `QualityTask` 快照，避免角色串扰。
 API Key 只通过函数参数进入适配器，Provider 异常信息会被脱敏。
+
+当前 `ModelSettings.stack()` 和工作台默认 `enable_thinking=false`，与旧工厂默认值区分。
+百炼 JSON Object 模式不保证字段结构，部分模型在思考模式下还可能违反 JSON 格式；因此本地
+Pydantic/Schema 校验仍然必需。[官方支持范围](https://help.aliyun.com/en/model-studio/qwen-structured-output)。
+可配置 `judge_model` 使用独立角色模型，但必须单独报告模型变化、效果和实际资源消耗。
 
 ## 确定性层的正确位置
 

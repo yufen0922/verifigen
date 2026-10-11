@@ -66,6 +66,30 @@ async def test_invalid_judge_is_retried_once_with_all_usage_and_attempts_account
     assert "SECRET" not in str(result.trace)
 
 
+async def test_protocol_retry_changes_the_instruction_not_the_evidence():
+    class CapturingModel(ScriptedModel):
+        def __init__(self):
+            super().__init__(
+                [{}, {"status": "pass", "score": 1, "summary": "Supported", "issues": []}]
+            )
+            self.requests = []
+
+        async def generate(self, request):
+            self.requests.append(request)
+            return await super().generate(request)
+
+    model = CapturingModel()
+    result = await QualityLoop(judge=LLMJudge(model), repairer=ReplayRepairer([])).run(
+        TASK,
+        initial={"answer": "799"},
+    )
+    assert result.status == "passed" and len(model.requests) == 2
+    assert "previous attempt failed" not in model.requests[0].instructions
+    assert "previous attempt failed" in model.requests[1].instructions
+    assert model.requests[0].source == model.requests[1].source
+    assert model.requests[0].previous == model.requests[1].previous
+
+
 @pytest.mark.parametrize(
     "budget,reason",
     [

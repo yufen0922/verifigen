@@ -63,6 +63,12 @@ Fresh judging hides previous verdicts in this profile, while Repair and audit ke
 One budgeted protocol retry is enabled, with known failed-call usage retained. Neither switch
 by itself proves improved semantic accuracy. Automatic review instructions are unchanged.
 
+Current calls default to non-thinking JSON mode. `--enable-thinking` restores the historical mode;
+`--validate-judge-quotes` adds an experimental literal-quotation contract. Both are saved in the
+configuration. `--judge-model MODEL` permits a separately configured Judge; the reviewer must
+differ from both runtime model aliases. Changing models changes the system and its cost, not just
+the loop. Never attribute a combined profile's result to one switch without an ablation.
+
 Review packets contain only the original task, evidence and one candidate. They omit the arm,
 original hallucination label, span annotations, runtime verdict, score and repair history.
 Identical outputs within one case are deduplicated so they receive the same review.

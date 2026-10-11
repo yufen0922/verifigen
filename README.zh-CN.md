@@ -47,13 +47,13 @@ Harness 的职责；导出的 `Harness` 类是 v0.1 兼容接口。
 
 ## 现在使用的模型
 
-真实示例默认使用百炼 `qwen3.5-flash`，并启用思考：
+真实示例默认使用百炼 `qwen3.5-flash` 的非思考 JSON 模式，以提高结构化输出的稳定性：
 
 ```python
 stack = make_qwen3_8b_stack(
     api_key=os.environ["DASHSCOPE_API_KEY"],
     model="qwen3.5-flash",
-    thinking_budget=2048,
+    enable_thinking=False,
 )
 loop = QualityLoop(
     generator=stack.generator,
@@ -64,6 +64,10 @@ loop = QualityLoop(
 
 三个角色使用独立适配器，真实示例和网页默认使用 Qwen3.5-Flash，也可以分别配置不同模型。
 API Key 只从环境变量读取，不写入代码、配置示例或运行 Trace。
+
+旧工厂的思考默认值保留兼容；`ModelSettings.stack()` 和工作台默认关闭思考，可显式开启进行
+对照实验。[百炼结构化输出文档](https://help.aliyun.com/en/model-studio/qwen-structured-output)
+提示 Qwen3.5 的思考模式可能返回不严格合法的 JSON。开启思考不等于更可靠的校验。
 
 ## 快速运行
 

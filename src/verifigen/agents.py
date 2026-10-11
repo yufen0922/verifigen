@@ -6,7 +6,7 @@ import inspect
 import json
 from collections.abc import Awaitable, Callable, Sequence
 from dataclasses import asdict, dataclass
-from typing import Any, Protocol
+from typing import Any, Literal, Protocol
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
@@ -71,14 +71,12 @@ class _IssuePayload(BaseModel):
     message: str = Field(min_length=1)
     evidence: str = ""
     suggestion: str = ""
-    candidate_quote: str = ""
-    source_quote: str = ""
 
 
 class _VerdictPayload(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    status: str
+    status: Literal["pass", "fail", "unknown"]
     score: float = Field(ge=0, le=1)
     summary: str = Field(min_length=1)
     issues: list[_IssuePayload] = Field(default_factory=list)
@@ -89,7 +87,7 @@ class _QuotedIssuePayload(_IssuePayload):
     evidence: str = Field(min_length=1, max_length=900)
     suggestion: str = Field(default="", max_length=400)
     candidate_quote: str = Field(min_length=1, max_length=400)
-    source_quote: str = Field(default="", max_length=600)
+    source_quote: str | None = Field(default=None, max_length=600)
 
 
 class _QuotedVerdictPayload(_VerdictPayload):
@@ -142,6 +140,11 @@ class LLMJudge:
     async def judge(self, request: JudgeRequest) -> JudgeResponse:
         payload_type = _QuotedVerdictPayload if self.validate_quotes else _VerdictPayload
         schema = payload_type.model_json_schema()
+        allowed = {criterion.id for criterion in request.task.criteria} | {"general"}
+        for definition in schema.get("$defs", {}).values():
+            criterion = definition.get("properties", {}).get("criterion_id")
+            if criterion is not None:
+                criterion["enum"] = sorted(allowed)
         generation = await self.generator.generate(
             GenerationRequest(
                 source={
@@ -175,7 +178,8 @@ class LLMJudge:
                     "including nested records and attributed reviews. Allow defensible implicit "
                     "truths and ordinary paraphrases, but not guesses about missing attributes. "
                     "For fail, include at least one issue with a concrete candidate claim and "
-                    "source evidence. For pass, issues must be empty; score is a rubric rating, "
+                    "source evidence. Use only the provided criterion IDs or general. For pass, "
+                    "issues must be empty; score is a rubric rating, "
                     "not a calibrated probability. Return exactly the JSON schema without extra "
                     "keys. Output final conclusions only, not deliberation. Group related errors "
                     "into at most six concise issues. Keep summary under 240 characters, message "
@@ -216,10 +220,9 @@ class LLMJudge:
             payload = payload_type.model_validate(content)
             if payload.status not in ("pass", "fail", "unknown"):
                 raise ValueError("invalid status")
-            allowed = {criterion.id for criterion in request.task.criteria} | {"general"}
             if any(issue.criterion_id not in allowed for issue in payload.issues):
                 raise ValueError("unknown criterion id")
-            if self.validate_quotes:
+            if isinstance(payload, _QuotedVerdictPayload):
                 for issue in payload.issues:
                     if not _contains_quote(issue.candidate_quote, request.candidate):
                         raise AgentResponseError(
@@ -236,10 +239,18 @@ class LLMJudge:
                             category="invalid_source_quote",
                         )
             verdict = JudgeVerdict(
-                status=payload.status,  # type: ignore[arg-type]
+                status=payload.status,
                 score=payload.score,
                 summary=payload.summary,
-                issues=tuple(JudgeIssue(**issue.model_dump()) for issue in payload.issues),
+                issues=tuple(
+                    JudgeIssue(
+                        **{
+                            **issue.model_dump(),
+                            "source_quote": getattr(issue, "source_quote", None) or "",
+                        }
+                    )
+                    for issue in payload.issues
+                ),
             )
         except (json.JSONDecodeError, TypeError, ValueError, ValidationError):
             raise AgentResponseError(

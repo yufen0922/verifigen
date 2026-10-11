@@ -126,6 +126,7 @@ def test_qwen_stack_uses_separate_role_adapters():
     [
         ("899", "799"),
         ("899", ""),
+        ("899", None),
     ],
 )
 async def test_quote_aware_judge_retains_verified_fragments(candidate_quote, source_quote):
@@ -150,7 +151,21 @@ async def test_quote_aware_judge_retains_verified_fragments(candidate_quote, sou
     )
     response = await judge.judge(JudgeRequest(task(), {"answer": "899"}, 0))
     assert response.verdict.issues[0].candidate_quote == candidate_quote
-    assert response.verdict.issues[0].source_quote == source_quote
+    assert response.verdict.issues[0].source_quote == (source_quote or "")
+
+
+async def test_plain_judge_schema_does_not_request_experimental_quote_fields():
+    captured = []
+
+    def answer(request):
+        captured.append(request.output_schema)
+        return {"status": "pass", "score": 1, "summary": "Supported", "issues": []}
+
+    await LLMJudge(FunctionGenerator(answer)).judge(JudgeRequest(task(), {"answer": "799"}, 0))
+    issue = captured[0]["$defs"]["_IssuePayload"]["properties"]
+    assert "source_quote" not in issue and "candidate_quote" not in issue
+    assert issue["criterion_id"]["enum"] == ["general", "grounding"]
+    assert captured[0]["properties"]["status"]["enum"] == ["pass", "fail", "unknown"]
 
 
 @pytest.mark.parametrize(
