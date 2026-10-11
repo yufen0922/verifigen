@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Add paired real-model RAGTruth baselines, anonymous cross-model proxy review, development-only
+  threshold diagnostics and dual-human-review/adjudication tooling; preserve unfavorable results.
+- Support optional history-hidden re-judgment while preserving repair feedback and audit history.
+- Bound actual chunked request bytes and allow deletion of completed private workbench history.
+- Add concurrent-run isolation, cancellation, oscillation and repair-regression tests.
+
 - Add a live, local FastAPI workbench with SSE rounds, input editing, budgets, cancellation,
   private persisted history, export and actual benchmark records.
 - Publish the frozen, source-isolated RAGTruth-600 corpus with pinned hashes, license,

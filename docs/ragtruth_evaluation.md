@@ -13,6 +13,12 @@ VerifiGen 已使用 [RAGTruth](https://github.com/ParticleMedia/RAGTruth) 作为
 [结果与逐条记录](../benchmarks/results/ragtruth-qwen3.5-flash/report.md)已发布。修复后盲审仍待完成。任何结果报告都
 必须注明数据来源，不能把合成集的 73.46% 写成 RAGTruth 修复成功率。
 
+已另完成 60 条四方案配对对照与 60 条开发集阈值诊断。
+对照中的修复稿使用匿名 Qwen-Plus 自动评审，属于代理指标，**不是人工盲审**；
+评审与原始人工标签一致率为 68.33%，结果不支持闭环优于普通自我修正。
+见[对照报告](../benchmarks/results/ragtruth-comparison-60/report.md)与
+[独立评审协议](comparative_evaluation.md)。
+
 ## 数据集介绍
 
 RAGTruth 是面向检索增强生成场景的词级幻觉语料。官方数据包含 2,965 个原始材料、17,790 条由

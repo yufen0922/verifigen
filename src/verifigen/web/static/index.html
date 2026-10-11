@@ -30,6 +30,9 @@
       <button class="tab" data-view="evaluation">
         <i data-lucide="chart-no-axes-combined"></i>评测结果
       </button>
+      <button class="tab" data-view="baselines">
+        <i data-lucide="git-compare-arrows"></i>方案对照
+      </button>
       <a href="/openapi.json" target="_blank" rel="noopener" class="api-link"
         >API<i data-lucide="arrow-up-right"></i
       ></a>
@@ -187,6 +190,10 @@
                     <option value="3">3</option>
                   </select></label
                 >
+                <label>复检历史<select id="judge-history">
+                  <option value="full">保留判定</option>
+                  <option value="none">隐藏判定</option>
+                </select></label>
               </div>
               <label class="toggle-label"
                 ><input id="citation-gate" type="checkbox" />引用 ID 关卡</label
@@ -320,6 +327,38 @@
               </tr>
             </thead>
             <tbody id="evaluation-rows"></tbody>
+          </table>
+        </div>
+      </section>
+      <section id="baselines-view" class="view" hidden>
+        <div class="section-title"><h1>RAGTruth · 方案对照</h1></div>
+        <p id="baseline-note" class="evaluation-note"></p>
+        <div class="table-scroll">
+          <table>
+            <thead><tr>
+              <th>方案</th><th>样本</th><th>发布覆盖率</th>
+              <th>自动评审有据率</th><th>自动评审有效产出率</th>
+              <th>调用</th><th>已知 Token</th><th>P95 / 秒</th>
+            </tr></thead>
+            <tbody id="baseline-metrics"></tbody>
+          </table>
+        </div>
+        <div class="section-title">
+          <h2>逐条对照</h2>
+          <select id="baseline-arm" aria-label="选择对照方案">
+            <option value="quality_loop">完整闭环</option>
+            <option value="self_refine">普通自我修正</option>
+            <option value="judge_only">只校验</option>
+            <option value="direct">直接输出</option>
+          </select>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>样本</th><th>任务</th><th>初稿标签</th>
+              <th>发布状态</th><th>自动评审 · 有据</th>
+              <th>自动评审 · 完成任务</th><th>调用</th><th></th>
+            </tr></thead>
+            <tbody id="baseline-records"></tbody>
           </table>
         </div>
       </section>

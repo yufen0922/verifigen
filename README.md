@@ -137,6 +137,16 @@ Post-repair independent review remains pending; no public-data repair success ra
 The 73.46% result above belongs only to the synthetic suite. See
 the [RAGTruth evaluation protocol](docs/ragtruth_evaluation.md).
 
+A [60-case paired pilot](benchmarks/results/ragtruth-comparison-60/report.md) now compares
+direct output, Judge-only, ordinary self-refinement and the full loop, with **314 runtime calls
+and 148 anonymous Qwen-Plus review calls**. Ordinary self-refinement has better automatic proxy
+yield and cost in this pilot; no loop-superiority claim is made. The reviewer agrees with original
+human labels on only **68.33%** of cases, so these proxies are not human-confirmed correctness.
+[Human review and reproducible audit](docs/comparative_evaluation.md) are available.
+A separate [60-case development diagnostic](benchmarks/results/ragtruth-dev-thresholds-60/report.md)
+finds saturated PASS scores: changing the score threshold alone does not fix false releases.
+See [operational boundaries](docs/operational_boundaries.md) before integrating a live service.
+
 ## Evaluation
 
 The single-scenario RAG suite has 60 deterministically generated cases:

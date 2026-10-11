@@ -4,6 +4,7 @@ const json = (value) => JSON.stringify(value, null, 2);
 const icons = () => window.lucide?.createIcons();
 let presets = [],
   evaluations = [],
+  baselineData = null,
   currentPreset = null,
   runId = null,
   stream = null,
@@ -304,6 +305,7 @@ async function start() {
       min_pass_score: Number($("threshold").value),
       max_observed_tokens: $("tokens").value ? Number($("tokens").value) : null,
       score_patience: $("patience").value ? Number($("patience").value) : null,
+      judge_history: $("judge-history").value,
     };
     clearRun();
     $("token-count").dataset.total = "0";
@@ -342,6 +344,7 @@ async function history() {
     $("history-rows").replaceChildren();
     for (const item of rows) {
       const tr = node("tr");
+      tr.dataset.runId = item.id;
       for (const value of [
         new Date(item.created_at).toLocaleString(),
         item.scenario,
@@ -355,6 +358,28 @@ async function history() {
         button = node("button", "查看", "row-button");
       button.addEventListener("click", () => openRun(item.id));
       td.append(button);
+      if (item.state !== "running") {
+        const remove = node("button", undefined, "icon-button");
+        remove.title = "删除本地运行记录";
+        remove.setAttribute("aria-label", "删除本地运行记录");
+        const icon = node("i");
+        icon.dataset.lucide = "trash-2";
+        remove.append(icon);
+        remove.addEventListener("click", async () => {
+          if (!window.confirm("删除这条本地记录及其中的业务输入？此操作不可撤销。")) return;
+          try {
+            await api(`/api/runs/${item.id}`, { method: "DELETE" });
+            if (runId === item.id) {
+              stream?.close();
+              clearRun();
+              runId = null;
+              record = null;
+            }
+            await history();
+          } catch (error) { notice(error.message); }
+        });
+        td.append(remove);
+      }
       tr.append(td);
       $("history-rows").append(tr);
     }
@@ -365,8 +390,49 @@ async function history() {
       tr.append(td);
       $("history-rows").append(tr);
     }
+    icons();
   } catch (error) {
     notice(error.message);
+  }
+}
+function baselines() {
+  $("baseline-metrics").replaceChildren();
+  $("baseline-records").replaceChildren();
+  if (!baselineData || baselineData.status !== "completed") {
+    $("baseline-note").textContent = "对照实验尚未发布。";
+    return;
+  }
+  const summary = baselineData.summary, config = summary.config;
+  const percent = (v) => v == null ? "—" : `${(v * 100).toFixed(2)}%`;
+  const labels = {direct: "直接输出", judge_only: "只校验",
+    self_refine: "普通自我修正", quality_loop: "完整闭环"};
+  $("baseline-note").textContent =
+    `${config.selected_case_ids.length} 条均衡抽样 · ${config.model} · 评审 ${config.reviewer_model} · ` +
+    `原稿人工标签一致率 ${percent(summary.reviewer_original_label_agreement.all_case_agreement)} · ` +
+    "预算上限相同，实际消耗不同；自动评审为代理指标，人工双人盲审待完成。";
+  for (const [arm, m] of Object.entries(summary.arms)) {
+    const tr = node("tr");
+    for (const value of [labels[arm], m.cases, percent(m.release_coverage),
+      percent(m.proxy_grounded_release_rate), percent(m.proxy_verified_yield),
+      m.model_calls, m.known_tokens_lower_bound.toLocaleString(), m.latency_seconds.p95.toFixed(2)]) {
+      tr.append(node("td", String(value)));
+    }
+    $("baseline-metrics").append(tr);
+  }
+  for (const r of baselineData.records.filter((r) => r.arm === $("baseline-arm").value)) {
+    const tr = node("tr"), review = r.external_review?.review;
+    for (const value of [r.id, r.task_type, r.initial_should_pass ? "正常" : "有错",
+      r.status, review?.grounding || "—", review?.fulfillment || "—", r.model_calls]) {
+      tr.append(node("td", String(value)));
+    }
+    const td = node("td"), button = node("button", "记录", "row-button");
+    button.addEventListener("click", () => {
+      $("record-content").textContent = json(r);
+      $("record-dialog").showModal();
+    });
+    td.append(button);
+    tr.append(td);
+    $("baseline-records").append(tr);
   }
 }
 async function openRun(id) {
@@ -389,6 +455,7 @@ async function openRun(id) {
       $(control).value = stored.input[field] ?? "";
     }
     $("generate").checked = stored.input.generate;
+    $("judge-history").value = stored.input.judge_history || "full";
     $("initial").disabled = stored.input.generate;
     runId = id;
     record = stored;
@@ -518,6 +585,7 @@ $("compare-round").addEventListener("change", comparison);
 $("refresh-history").addEventListener("click", history);
 $("evaluation-select").addEventListener("change", evaluation);
 $("evaluation-filter").addEventListener("change", evaluation);
+$("baseline-arm").addEventListener("change", baselines);
 $("close-dialog").addEventListener("click", () => $("record-dialog").close());
 $("export").addEventListener("click", () => {
   if (!record) return;
@@ -535,17 +603,20 @@ document.querySelectorAll(".tab").forEach((button) =>
     view(button.dataset.view);
     if (button.dataset.view === "history") history();
     if (button.dataset.view === "evaluation") evaluation();
+    if (button.dataset.view === "baselines") baselines();
   }),
 );
 async function boot() {
   try {
-    const [config, p, e] = await Promise.all([
+    const [config, p, e, b] = await Promise.all([
       api("/api/config"),
       api("/api/presets"),
       api("/api/evaluations"),
+      api("/api/comparison"),
     ]);
     presets = p;
     evaluations = e;
+    baselineData = b;
     $("model-label").textContent = config.model;
     $("connection-dot").classList.toggle("ready", config.configured);
     if (!config.configured)

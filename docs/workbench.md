@@ -39,12 +39,15 @@ percentage with `ReportFactsGate`. These gates do not claim to prove arbitrary s
 | `GET /api/runs/{id}/events` | Event stream, `Last-Event-ID` or `after` reconnect cursor |
 | `POST /api/runs/{id}/cancel` | Cancel execution without publishing the current candidate |
 | `GET /api/runs/{id}` | Full operator record with inputs, candidates, verdicts and result |
+| `DELETE /api/runs/{id}` | Delete a completed record from local disk and memory; active runs return 409 |
 | `GET /api/history` | Latest 100 records across service restarts |
 | `GET /api/evaluations` | Published actual evaluations; never a replay score |
+| `GET /api/comparison` | Four-arm paired pilot with explicitly labeled external-model proxies |
 | `GET /openapi.json` | Request/response schemas |
 
 Three concurrent runs, at most seven calls and two repair rounds per run, a 180-second deadline,
 512-KB request cap, local Host/Origin checks, static Content Security Policy and no browser CDN.
+The byte cap is enforced on actual bodies, including chunked requests, before JSON parsing.
 Numeric controls map to server validation rather than only UI restrictions. Token thresholds are
 post-call observations: a single in-flight call can overshoot; they are not hard provider quotas.
 Cancellation closes the local task and prevents publication; it cannot guarantee that the provider
@@ -54,6 +57,9 @@ Full local records may contain sensitive business evidence. `runs/web` is ignore
 records are atomically written with owner-only permissions. Delete them when no longer needed;
 only sanitized public benchmark data is packaged with the application. This service persists
 completed runs, not mid-call recovery or distributed job state.
+History rows have a deletion control. Deletion is not secure physical erasure or automatic retention.
+The budget panel also exposes `judge_history=none` for confirmation-bias ablations; repair feedback
+and audit records are retained. No accuracy improvement is claimed from that switch alone.
 
 ## Browser Acceptance
 

@@ -22,7 +22,11 @@ ROOT = Path(__file__).resolve().parents[2]
 async def evaluate(args: argparse.Namespace) -> dict[str, Any]:
     settings = ModelSettings.from_env(ROOT / ".env.local")
     stack = settings.stack(thinking_budget=args.thinking_budget)
-    budget = QualityBudget(max_model_calls=5, max_repair_rounds=2, deadline_seconds=120)
+    budget = QualityBudget(
+        max_model_calls=args.max_model_calls,
+        max_repair_rounds=args.max_repair_rounds,
+        deadline_seconds=120,
+    )
     all_samples = read_jsonl(args.samples)
     selected = []
     for task in TASKS:
@@ -124,6 +128,8 @@ def main() -> None:
     parser.add_argument("--limit-per-task", type=int, required=True)
     parser.add_argument("--thinking-budget", type=int, default=1024)
     parser.add_argument("--concurrency", type=int, default=4)
+    parser.add_argument("--max-model-calls", type=int, default=5)
+    parser.add_argument("--max-repair-rounds", type=int, default=2)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--resume", action="store_true")
     args = parser.parse_args()
@@ -132,6 +138,8 @@ def main() -> None:
         or args.limit_per_task % 2
         or not 1 <= args.concurrency <= 16
         or args.thinking_budget <= 0
+        or not 1 <= args.max_model_calls <= 7
+        or not 0 <= args.max_repair_rounds <= 2
     ):
         parser.error(
             "Use a positive even task limit, concurrency 1..16 and positive thinking budget"

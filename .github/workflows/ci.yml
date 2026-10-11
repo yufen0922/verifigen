@@ -28,6 +28,8 @@ jobs:
       - name: Check generated documentation diagrams
         run: uv run --locked --extra dev python scripts/render_diagrams.py --check
       - run: uv run --locked --extra dev mypy
+      - name: Audit published paired evaluation
+        run: uv run --locked --extra dev python scripts/audit_comparison.py
       - run: uv run --locked --extra dev pytest --cov=verifigen --cov-fail-under=85
       - name: Rebuild annotated fixtures
         run: |

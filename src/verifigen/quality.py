@@ -9,7 +9,7 @@ import uuid
 from collections.abc import Callable
 from dataclasses import asdict, replace
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from .agents import Judge, Repairer
 from .gates import CandidateGate, SchemaGate
@@ -45,13 +45,17 @@ class QualityLoop:
         budget: QualityBudget | None = None,
         policy: QualityPolicy | None = None,
         gates: tuple[CandidateGate, ...] = (),
+        judge_history: Literal["full", "none"] = "full",
     ) -> None:
+        if judge_history not in ("full", "none"):
+            raise ValueError("judge_history must be full or none")
         self.judge = judge
         self.repairer = repairer
         self.generator = generator
         self.budget = budget or QualityBudget()
         self.policy = policy or QualityPolicy()
         self.gates = tuple(gates)
+        self.judge_history = judge_history
 
     async def run(
         self,
@@ -230,7 +234,10 @@ class QualityLoop:
             try:
                 response = await self.judge.judge(
                     JudgeRequest(
-                        task_snapshot(), json_copy(candidate), round_index, tuple(feedback_history)
+                        task_snapshot(),
+                        json_copy(candidate),
+                        round_index,
+                        tuple(feedback_history) if self.judge_history == "full" else (),
                     )
                 )
             except asyncio.CancelledError:
@@ -294,6 +301,7 @@ class QualityLoop:
                 max_repair_rounds=self.budget.max_repair_rounds,
                 budget=asdict(self.budget),
                 policy=asdict(self.policy),
+                judge_history=self.judge_history,
             )
             try:
                 gates = (SchemaGate(task.output_schema), *self.gates)

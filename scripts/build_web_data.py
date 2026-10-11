@@ -117,6 +117,23 @@ def main() -> None:
             }
         )
     (OUTPUT / "evaluations.json").write_text(json.dumps(evaluations, ensure_ascii=False) + "\n")
+    comparison = ROOT / "benchmarks/results/ragtruth-comparison-60"
+    payload = {"status": "pending", "summary": None, "records": []}
+    if (comparison / "summary.json").exists():
+        mapping = {
+            (r["id"], r["arm"]): r["review_id"]
+            for r in read_jsonl(comparison / "review-mapping.jsonl")
+        }
+        reviews = {r["review_id"]: r for r in read_jsonl(comparison / "reviews.jsonl")}
+        payload = {
+            "status": "completed",
+            "summary": json.loads((comparison / "summary.json").read_text()),
+            "records": [
+                {**r, "external_review": reviews.get(mapping.get((r["id"], r["arm"])))}
+                for r in read_jsonl(comparison / "records.jsonl")
+            ],
+        }
+    (OUTPUT / "comparison.json").write_text(json.dumps(payload, ensure_ascii=False) + "\n")
     print(f"Packaged {len(presets)} task presets and {len(evaluations)} evaluations")
 
 

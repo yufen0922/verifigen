@@ -125,6 +125,14 @@ QA、摘要、数据转文本各 200 条，每类包含 100 条有效幻觉样�
 修复后独立盲审尚未完成，不能将 Judge 自评通过当成修复正确；上面的 73.46% 仅属于合成集。详见
 [RAGTruth 评测协议](docs/ragtruth_evaluation.md)。
 
+另已完成 [60 条同输入四方案对照](benchmarks/results/ragtruth-comparison-60/report.md)：
+直接输出、只校验、普通自我修正与完整闭环，共 **314 次运行时调用、148 次匿名 Qwen-Plus 评审**。
+本轮普通自我修正的自动代理产出率和成本优于完整闭环，不声称闭环效果领先。
+外部评审与原始人工标签的一致率仅 **68.33%**，不能把代理指标当作人工确认正确率。
+[人工双人盲审与对照协议](docs/comparative_evaluation.md)已提供；
+[60 条开发集阈值诊断](benchmarks/results/ragtruth-dev-thresholds-60/report.md)表明 PASS 分数集中于 1.0，
+调高阈值不能解决本轮误放行。接入前请阅读[运行边界](docs/operational_boundaries.md)。
+
 单场景 RAG 评测使用确定性生成的 60 条样本：
 
 ```bash

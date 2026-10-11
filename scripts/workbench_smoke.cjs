@@ -124,6 +124,43 @@ const fs = require("node:fs");
         fullPage: false,
       });
     }
+    await page.locator('[data-view="baselines"]').click();
+    await page.waitForFunction(
+      () => document.querySelector("#baseline-metrics").children.length === 4,
+    );
+    assert.equal(await page.locator("#baseline-records tr").count(), 60);
+    assert.match(await page.locator("#baseline-note").textContent(), /68.33%/);
+    await page.locator("#baseline-arm").selectOption("self_refine");
+    assert.equal(await page.locator("#baseline-records tr").count(), 60);
+    await page.locator("#baseline-records button").first().click();
+    assert.match(await page.locator("#record-content").textContent(), /cross_model_automatic_proxy/);
+    await page.locator("#close-dialog").click();
+    for (const viewport of [
+      { width: 1440, height: 1080 },
+      { width: 390, height: 844 },
+      { width: 320, height: 700 },
+    ]) {
+      await page.setViewportSize(viewport);
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+      await page.screenshot({path: `runs/screenshots/baselines-${viewport.width}.png`, fullPage: false});
+    }
+    await page.setViewportSize({ width: 1440, height: 1080 });
+    const ownRun = await page.request.post(
+      `${process.env.WORKBENCH_URL || "http://127.0.0.1:8765"}/api/runs`,
+      {data: {scenario: "custom", source: {}, prompt: "Browser deletion check",
+        criteria: [{id: "grounding", description: "Do not invent facts"}],
+        output_schema: {type: "object"}, initial: {}, max_model_calls: 0}},
+    );
+    assert.equal(ownRun.status(), 202);
+    const ownId = (await ownRun.json()).id;
+    await page.request.get(`${process.env.WORKBENCH_URL || "http://127.0.0.1:8765"}/api/runs/${ownId}/events`);
+    await page.locator('[data-view="history"]').click();
+    const ownRow = page.locator(`#history-rows tr[data-run-id="${ownId}"]`);
+    await ownRow.waitFor();
+    page.once("dialog", (dialog) => dialog.accept());
+    await ownRow.locator('[aria-label="删除本地运行记录"]').click();
+    await page.waitForTimeout(300);
+    assert.equal((await page.request.get(`${process.env.WORKBENCH_URL || "http://127.0.0.1:8765"}/api/runs/${ownId}`)).status(), 404);
     assert.deepEqual(errors, []);
     console.log(
       "Workbench browser acceptance passed at desktop, tablet and mobile widths.",

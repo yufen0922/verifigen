@@ -123,6 +123,7 @@ def test_invalid_schema_fails_closed_before_judgment(client):
         {"max_model_calls": -1},
         {"min_pass_score": 2},
         {"criteria": []},
+        {"judge_history": "invalid"},
         {"criteria": [{"id": "x", "description": "a"}, {"id": "x", "description": "b"}]},
     ],
 )
@@ -194,3 +195,58 @@ def test_completed_history_has_owner_only_permissions(tmp_path):
         identifier = client.post("/api/runs", json=payload()).json()["id"]
         client.get(f"/api/runs/{identifier}/events")
         assert (tmp_path / f"{identifier}.json").stat().st_mode & 0o777 == 0o600
+
+
+def test_completed_run_can_be_deleted_from_memory_and_disk(tmp_path):
+    with TestClient(
+        create_app(settings=ModelSettings(api_key="unused"), run_dir=tmp_path, stack=agents())
+    ) as client:
+        identifier = client.post("/api/runs", json=payload()).json()["id"]
+        client.get(f"/api/runs/{identifier}/events")
+        assert client.delete(f"/api/runs/{identifier}").json()["state"] == "deleted"
+        assert client.get(f"/api/runs/{identifier}").status_code == 404
+        assert not (tmp_path / f"{identifier}.json").exists()
+        assert client.get("/api/history").json() == []
+
+
+def test_running_run_must_be_cancelled_before_deletion(tmp_path):
+    with TestClient(
+        create_app(
+            settings=ModelSettings(api_key="unused"), run_dir=tmp_path, stack=agents(slow=True)
+        )
+    ) as client:
+        identifier = client.post("/api/runs", json=payload()).json()["id"]
+        assert client.delete(f"/api/runs/{identifier}").status_code == 409
+        client.post(f"/api/runs/{identifier}/cancel")
+        assert client.delete(f"/api/runs/{identifier}").status_code == 200
+
+
+def test_chunked_body_is_bounded_before_json_validation(client):
+    def oversized():
+        yield b'{"prompt":"'
+        yield b"x" * 256000
+        yield b"x" * 256001
+        yield b'"}'
+
+    response = client.post(
+        "/api/runs", content=oversized(), headers={"content-type": "application/json"}
+    )
+    assert response.status_code == 413
+    assert client.get("/api/history").json() == []
+
+
+def test_cross_origin_delete_is_rejected(client):
+    identifier = client.post("/api/runs", json=payload()).json()["id"]
+    response = client.delete(f"/api/runs/{identifier}", headers={"origin": "https://evil.example"})
+    assert response.status_code == 403
+
+
+def test_comparison_route_is_available(client):
+    assert client.get("/api/comparison").status_code == 200
+
+
+def test_history_ablation_is_recorded_and_forwarded_to_the_runtime(client):
+    identifier = client.post("/api/runs", json=payload(judge_history="none")).json()["id"]
+    result = client.get(f"/api/runs/{identifier}").json()["result"]
+    assert result["trace"][0]["details"]["judge_history"] == "none"
+    assert result["status"] == "passed"

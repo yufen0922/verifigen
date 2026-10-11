@@ -12,7 +12,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, StreamingResponse
@@ -29,6 +29,7 @@ from ..jsonutil import json_copy
 from ..policy import QualityPolicy
 from ..quality import QualityLoop
 from ..review import Criterion, QualityBudget, QualityTask
+from .limits import RequestBodyLimit
 
 DIRECTORY = Path(__file__).parent
 
@@ -60,6 +61,7 @@ class RunInput(BaseModel):
     min_pass_score: float = Field(default=0.8, ge=0, le=1)
     max_observed_tokens: int | None = Field(default=None, gt=0, le=100000, strict=True)
     score_patience: int | None = Field(default=None, ge=1, le=3, strict=True)
+    judge_history: Literal["full", "none"] = "full"
 
     def task(self) -> QualityTask:
         if self.scenario == "support":
@@ -135,6 +137,7 @@ def create_app(
     app.add_middleware(
         TrustedHostMiddleware, allowed_hosts=["localhost", "127.0.0.1", "[::1]", "testserver"]
     )
+    app.add_middleware(RequestBodyLimit)
 
     @app.middleware("http")
     async def local_requests(request: Request, call_next: Any) -> Any:
@@ -202,6 +205,10 @@ def create_app(
     async def evaluations() -> Any:
         return json.loads((DIRECTORY / "data/evaluations.json").read_text(encoding="utf-8"))
 
+    @app.get("/api/comparison")
+    async def comparison() -> Any:
+        return json.loads((DIRECTORY / "data/comparison.json").read_text(encoding="utf-8"))
+
     def persist(job: Job) -> None:
         destination.mkdir(parents=True, exist_ok=True)
         path = destination / f"{job.id}.json"
@@ -225,6 +232,7 @@ def create_app(
                     max_observed_tokens=payload.max_observed_tokens,
                 ),
                 policy=QualityPolicy(score_patience=payload.score_patience),
+                judge_history=payload.judge_history,
                 gates=(
                     *((CitationGate(),) if payload.citation_gate else ()),
                     *((SupportFactsGate(),) if payload.scenario == "support" else ()),
@@ -274,6 +282,18 @@ def create_app(
     @app.get("/api/runs/{identifier}")
     async def result(identifier: str) -> dict[str, Any]:
         return saved(identifier)
+
+    @app.delete("/api/runs/{identifier}")
+    async def delete(identifier: str) -> dict[str, str]:
+        record = saved(identifier)
+        if record["state"] == "running":
+            raise HTTPException(409, "Cancel the active run before deleting it")
+        try:
+            (destination / f"{identifier}.json").unlink(missing_ok=True)
+        except OSError:
+            raise HTTPException(500, "Stored run could not be deleted") from None
+        jobs.pop(identifier, None)
+        return {"state": "deleted"}
 
     @app.post("/api/runs/{identifier}/cancel")
     async def cancel(identifier: str) -> dict[str, str]:
