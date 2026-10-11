@@ -65,4 +65,4 @@
   a source-driven template baseline with explicit limits on result claims.
 - Add tests, developer dependency lock, CI matrix, package builds and draft
   GitHub Release automation.
-- Add English/Chinese README, architecture, learning and interview guides.
+- Add English/Chinese README, architecture and learning guides.
