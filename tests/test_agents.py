@@ -117,7 +117,8 @@ def test_qwen_stack_uses_separate_role_adapters():
     assert isinstance(stack.judge, LLMJudge) and isinstance(stack.repairer, LLMRepairer)
     assert stack.generator is not stack.judge.generator
     assert stack.judge.generator is not stack.repairer.generator
-    assert stack.judge.validate_quotes is True
+    assert stack.judge.validate_quotes is False
+    assert make_qwen3_8b_stack(api_key="secret", validate_judge_quotes=True).judge.validate_quotes
 
 
 @pytest.mark.parametrize(

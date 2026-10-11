@@ -29,7 +29,14 @@ class ModelSettings:
             ),
         )
 
-    def stack(self, *, thinking_budget: int = 1024) -> Qwen3Stack:
+    def stack(
+        self,
+        *,
+        thinking_budget: int = 1024,
+        enable_thinking: bool = False,
+        validate_judge_quotes: bool = False,
+        judge_model: str | None = None,
+    ) -> Qwen3Stack:
         if not self.api_key:
             raise ValueError("Set DASHSCOPE_API_KEY or configure the ignored .env.local file")
         return make_qwen3_8b_stack(
@@ -37,4 +44,7 @@ class ModelSettings:
             model=self.model,
             base_url=self.base_url,
             thinking_budget=thinking_budget,
+            enable_thinking=enable_thinking,
+            validate_judge_quotes=validate_judge_quotes,
+            judge_model=judge_model,
         )

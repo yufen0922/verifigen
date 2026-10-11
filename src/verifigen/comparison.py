@@ -18,7 +18,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from .agents import SELF_REFINE_INSTRUCTIONS, Qwen3Stack
-from .generators import Generator
+from .generators import Generator, ProviderError
 from .jsonutil import digest, json_copy
 from .quality import QualityLoop
 from .ragtruth import TASKS, make_ragtruth_task
@@ -159,8 +159,8 @@ async def run_arm(
                     except asyncio.CancelledError:
                         usages.append(Usage())
                         raise
-                    except Exception:
-                        usages.append(Usage())
+                    except Exception as exc:
+                        usages.append(exc.usage if isinstance(exc, ProviderError) else Usage())
                         raise RuntimeError("provider_error") from None
                     usages.append(generation.usage)
                     proposed = generation.content

@@ -155,6 +155,10 @@ function addRound(round) {
     block.append(node("strong", issue.criterion_id), node("p", issue.message));
     if (issue.evidence)
       block.append(node("p", `证据：${issue.evidence}`, "evidence"));
+    if (issue.candidate_quote)
+      block.append(node("p", `候选原句：${issue.candidate_quote}`, "evidence"));
+    if (issue.source_quote)
+      block.append(node("p", `来源原句：${issue.source_quote}`, "evidence"));
     if (issue.suggestion)
       block.append(node("p", `修复建议：${issue.suggestion}`, "evidence"));
     body.append(block);
@@ -309,6 +313,8 @@ async function start() {
       judge_history: $("judge-history").value,
       initial_refinement: $("initial-refinement").checked,
       max_protocol_retries: Number($("protocol-retries").value),
+      enable_thinking: $("thinking-mode").value === "true",
+      validate_judge_quotes: $("validate-quotes").checked,
     };
     clearRun();
     $("token-count").dataset.total = "0";
@@ -466,6 +472,8 @@ async function openRun(id) {
     $("judge-history").value = stored.input.judge_history || "full";
     $("initial-refinement").checked = stored.input.initial_refinement || false;
     $("protocol-retries").value = String(stored.input.max_protocol_retries ?? 1);
+    $("thinking-mode").value = String(stored.input.enable_thinking ?? true);
+    $("validate-quotes").checked = stored.input.validate_judge_quotes || false;
     $("initial").disabled = stored.input.generate;
     runId = id;
     record = stored;

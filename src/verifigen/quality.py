@@ -204,13 +204,15 @@ class QualityLoop:
             nonlocal in_flight_model_calls
             in_flight_model_calls -= cost
 
-        async def invoke(component: Any, role: str, operation: Callable[[], Awaitable[Any]]) -> Any:
+        async def invoke(
+            component: Any, role: str, operation: Callable[[int], Awaitable[Any]]
+        ) -> Any:
             for attempt in range(self.max_protocol_retries + 1):
                 cost = reserve(component, role)
                 if attempt:
                     emit("protocol_retry", role=role, attempt=attempt)
                 try:
-                    response = await operation()
+                    response = await operation(attempt)
                 except asyncio.CancelledError:
                     raise
                 except Exception as exc:
@@ -223,10 +225,8 @@ class QualityLoop:
                         usages.append(usage)
                     complete(cost)
                     category = (
-                        "invalid_agent_response"
-                        if isinstance(exc, AgentResponseError)
-                        else exc.category
-                        if isinstance(exc, ProviderError)
+                        exc.category
+                        if isinstance(exc, (AgentResponseError, ProviderError))
                         else "component_error"
                     )
                     emit(
@@ -252,7 +252,7 @@ class QualityLoop:
             generated = await invoke(
                 self.generator,
                 "generator",
-                lambda: self.generator.generate(  # type: ignore[union-attr]
+                lambda _attempt: self.generator.generate(  # type: ignore[union-attr]
                     GenerationRequest(
                         source=json_copy(task.source),
                         prompt=task.prompt,
@@ -274,12 +274,13 @@ class QualityLoop:
             response = await invoke(
                 self.judge,
                 "judge",
-                lambda: self.judge.judge(
+                lambda attempt: self.judge.judge(
                     JudgeRequest(
                         task_snapshot(),
                         json_copy(candidate),
                         round_index,
                         tuple(feedback_history) if self.judge_history == "full" else (),
+                        protocol_retry=bool(attempt),
                     )
                 ),
             )
@@ -302,13 +303,14 @@ class QualityLoop:
             response = await invoke(
                 self.repairer,
                 "repair",
-                lambda: self.repairer.repair(
+                lambda attempt: self.repairer.repair(
                     RepairRequest(
                         task_snapshot(),
                         json_copy(candidate),
                         verdict,
                         round_index,
                         tuple(feedback_history),
+                        protocol_retry=bool(attempt),
                     )
                 ),
             )
@@ -354,7 +356,7 @@ class QualityLoop:
                     refined = await invoke(
                         self.initial_refiner,
                         "refine",
-                        lambda: self.initial_refiner.generate(  # type: ignore[union-attr]
+                        lambda _attempt: self.initial_refiner.generate(  # type: ignore[union-attr]
                             GenerationRequest(
                                 source=json_copy(task.source),
                                 prompt=task.prompt,

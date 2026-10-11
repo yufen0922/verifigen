@@ -38,11 +38,16 @@ def write_json(path: Path, value: Any) -> None:
 
 async def evaluate(args: argparse.Namespace) -> dict[str, Any]:
     settings = ModelSettings.from_env(ROOT / ".env.local")
-    if args.reviewer_model == settings.model:
+    if args.reviewer_model in {settings.model, args.judge_model}:
         raise ValueError(
             "Use a different reviewer model; same-model self-review is not independent"
         )
-    stack = settings.stack(thinking_budget=args.thinking_budget)
+    stack = settings.stack(
+        thinking_budget=args.thinking_budget,
+        enable_thinking=args.enable_thinking,
+        validate_judge_quotes=args.validate_judge_quotes,
+        judge_model=args.judge_model,
+    )
     reviewer = CompatibleChatGenerator(
         base_url=settings.base_url,
         api_key=settings.api_key,
@@ -77,6 +82,7 @@ async def evaluate(args: argparse.Namespace) -> dict[str, Any]:
         "policy.py",
         "gates.py",
         "ragtruth.py",
+        "config.py",
     )
     config = {
         "protocol": PROTOCOL,
@@ -88,6 +94,8 @@ async def evaluate(args: argparse.Namespace) -> dict[str, Any]:
         "selected_case_ids": [s["id"] for s in samples],
         "per_task": args.per_task,
         "thinking_budget": args.thinking_budget,
+        "enable_thinking": args.enable_thinking,
+        "judge_model": stack.judge.generator.model,
         "temperature": 0,
         "max_output_tokens": 4096,
         "budget_ceiling": asdict(budget),
@@ -206,6 +214,9 @@ def main() -> None:
     parser.add_argument("--optimized", action="store_true")
     parser.add_argument("--judge-history", choices=("full", "none"), default="full")
     parser.add_argument("--max-protocol-retries", type=int, choices=(0, 1), default=1)
+    parser.add_argument("--enable-thinking", action="store_true")
+    parser.add_argument("--validate-judge-quotes", action="store_true")
+    parser.add_argument("--judge-model")
     args = parser.parse_args()
     if not 1 <= args.concurrency <= 16 or args.thinking_budget < 1:
         parser.error("Use concurrency 1..16 and a positive thinking budget")

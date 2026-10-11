@@ -26,9 +26,21 @@ from .types import GenerationRequest, Usage
 class AgentResponseError(RuntimeError):
     """The agent returned a response that cannot safely drive the loop."""
 
-    def __init__(self, message: str, *, usage: Usage | None = None) -> None:
+    def __init__(
+        self, message: str, *, usage: Usage | None = None, category: str = "invalid_agent_response"
+    ) -> None:
         super().__init__(message)
         self.usage = usage or Usage()
+        self.category = (
+            category
+            if category
+            in {
+                "invalid_agent_response",
+                "invalid_candidate_quote",
+                "invalid_source_quote",
+            }
+            else "invalid_agent_response"
+        )
 
 
 SELF_REFINE_INSTRUCTIONS = (
@@ -165,7 +177,10 @@ class LLMJudge:
                     "For fail, include at least one issue with a concrete candidate claim and "
                     "source evidence. For pass, issues must be empty; score is a rubric rating, "
                     "not a calibrated probability. Return exactly the JSON schema without extra "
-                    "keys.\nTask-specific instructions:\n"
+                    "keys. Output final conclusions only, not deliberation. Group related errors "
+                    "into at most six concise issues. Keep summary under 240 characters, message "
+                    "under 320, evidence under 480 and suggestion under 240. Never report an issue "
+                    "that your own explanation concludes is supported.\nTask-specific instructions:\n"
                     + request.task.instructions
                     + (
                         "\nEvery issue needs candidate_quote copied exactly from the CURRENT "
@@ -180,6 +195,14 @@ class LLMJudge:
                         "under 480 and suggestion under 240. Check all criteria even though "
                         "feedback is concise."
                         if self.validate_quotes
+                        else ""
+                    )
+                    + (
+                        "\nThe previous attempt failed local JSON/quotation validation. "
+                        "Reconstruct a concise verdict matching the schema exactly. Copy quote "
+                        "fields verbatim from the current candidate and source, without "
+                        "ellipsis, attribution prefixes or paraphrasing. Return final conclusions only."
+                        if request.protocol_retry
                         else ""
                     )
                 ),
@@ -199,11 +222,19 @@ class LLMJudge:
             if self.validate_quotes:
                 for issue in payload.issues:
                     if not _contains_quote(issue.candidate_quote, request.candidate):
-                        raise ValueError("candidate quotation not found")
+                        raise AgentResponseError(
+                            "Judge quoted a nonexistent candidate fragment",
+                            usage=generation.usage,
+                            category="invalid_candidate_quote",
+                        )
                     if issue.source_quote and not _contains_quote(
                         issue.source_quote, request.task.source
                     ):
-                        raise ValueError("source quotation not found")
+                        raise AgentResponseError(
+                            "Judge quoted a nonexistent source fragment",
+                            usage=generation.usage,
+                            category="invalid_source_quote",
+                        )
             verdict = JudgeVerdict(
                 status=payload.status,  # type: ignore[arg-type]
                 score=payload.score,
@@ -252,7 +283,14 @@ class LLMRepairer:
                     "claims or explicitly preserve uncertainty; do not invent missing attributes "
                     "or delete supported task-essential content. Do not add requirements beyond "
                     "the explicit criteria. Return an object with revised_candidate and a short "
-                    "change_summary.\nTask-specific instructions:\n" + request.task.instructions
+                    "change_summary.\nTask-specific instructions:\n"
+                    + request.task.instructions
+                    + (
+                        "\nThe previous attempt failed local JSON validation. Return only "
+                        "revised_candidate and change_summary, following the exact nested schema."
+                        if request.protocol_retry
+                        else ""
+                    )
                 ),
                 previous=json_copy(request.candidate),
             )
@@ -350,28 +388,32 @@ def make_qwen3_8b_stack(
     timeout: float = 60.0,
     max_output_tokens: int = 4096,
     transport: Any = None,
-    validate_judge_quotes: bool = True,
+    validate_judge_quotes: bool = False,
+    enable_thinking: bool = True,
+    judge_model: str | None = None,
 ) -> Qwen3Stack:
     """Build generation, judge and repair roles on Bailian's Qwen3-8B endpoint."""
     if thinking_budget <= 0:
         raise ValueError("thinking_budget must be positive")
 
-    def adapter() -> CompatibleChatGenerator:
+    def adapter(role_model: str | None = None) -> CompatibleChatGenerator:
         return CompatibleChatGenerator(
             base_url=base_url,
-            model=model,
+            model=role_model or model,
             api_key=api_key,
             timeout=timeout,
             max_output_tokens=max_output_tokens,
             json_mode=True,
             transport=transport,
-            extra_body={"enable_thinking": True, "thinking_budget": thinking_budget},
+            extra_body={"enable_thinking": True, "thinking_budget": thinking_budget}
+            if enable_thinking
+            else {"enable_thinking": False},
         )
 
     generation_model = adapter()
     return Qwen3Stack(
         generation_model,
-        LLMJudge(adapter(), validate_quotes=validate_judge_quotes),
+        LLMJudge(adapter(judge_model), validate_quotes=validate_judge_quotes),
         LLMRepairer(adapter()),
     )
 

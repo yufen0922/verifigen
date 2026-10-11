@@ -100,6 +100,7 @@ class JudgeRequest:
     candidate: Any
     round_index: int
     history: tuple[JudgeVerdict, ...] = ()
+    protocol_retry: bool = False
 
 
 @dataclass(frozen=True)
@@ -109,6 +110,7 @@ class RepairRequest:
     verdict: JudgeVerdict
     round_index: int
     history: tuple[JudgeVerdict, ...] = ()
+    protocol_retry: bool = False
 
 
 @dataclass(frozen=True)

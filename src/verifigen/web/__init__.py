@@ -64,6 +64,8 @@ class RunInput(BaseModel):
     judge_history: Literal["full", "none"] = "full"
     initial_refinement: bool = False
     max_protocol_retries: int = Field(default=1, ge=0, le=1, strict=True)
+    enable_thinking: bool = False
+    validate_judge_quotes: bool = False
 
     def task(self) -> QualityTask:
         if self.scenario == "support":
@@ -269,7 +271,10 @@ def create_app(
             raise HTTPException(413, "Request exceeds 512 KB")
         try:
             task = payload.task()
-            agents = stack or configured.stack()
+            agents = stack or configured.stack(
+                enable_thinking=payload.enable_thinking,
+                validate_judge_quotes=payload.validate_judge_quotes,
+            )
         except ValueError as exc:
             raise HTTPException(422, str(exc)) from None
         if len(jobs) >= 100:
