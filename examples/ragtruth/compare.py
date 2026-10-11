@@ -96,6 +96,7 @@ async def evaluate(args: argparse.Namespace) -> dict[str, Any]:
         "excluded_sources": excluded_sources,
         "judge_history": args.judge_history,
         "max_protocol_retries": args.max_protocol_retries,
+        "validate_judge_quotes": stack.judge.validate_quotes,
         "refine_verify_initial_edits": 1 if args.optimized else 0,
         "self_refine_rounds": 2,
         "concurrency": args.concurrency,

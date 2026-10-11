@@ -31,6 +31,8 @@ class JudgeIssue:
     message: str
     evidence: str = ""
     suggestion: str = ""
+    candidate_quote: str = ""
+    source_quote: str = ""
 
     def __post_init__(self) -> None:
         if not self.criterion_id.strip() or not self.message.strip():

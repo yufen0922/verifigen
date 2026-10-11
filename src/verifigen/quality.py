@@ -207,6 +207,8 @@ class QualityLoop:
         async def invoke(component: Any, role: str, operation: Callable[[], Awaitable[Any]]) -> Any:
             for attempt in range(self.max_protocol_retries + 1):
                 cost = reserve(component, role)
+                if attempt:
+                    emit("protocol_retry", role=role, attempt=attempt)
                 try:
                     response = await operation()
                 except asyncio.CancelledError:
@@ -237,7 +239,6 @@ class QualityLoop:
                         and usage.total_tokens is not None
                         and attempt < self.max_protocol_retries
                     ):
-                        emit("protocol_retry", role=role, attempt=attempt + 1)
                         continue
                     raise RuntimeError(role + "_error") from None
                 complete(cost)

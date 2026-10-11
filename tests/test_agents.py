@@ -1,6 +1,7 @@
 import json
 
 import httpx
+import pytest
 
 from verifigen import (
     Criterion,
@@ -9,6 +10,8 @@ from verifigen import (
     QualityTask,
     make_qwen3_8b_stack,
 )
+from verifigen.agents import AgentResponseError
+from verifigen.generators import FunctionGenerator
 from verifigen.review import JudgeRequest, JudgeVerdict, RepairRequest
 
 
@@ -114,6 +117,102 @@ def test_qwen_stack_uses_separate_role_adapters():
     assert isinstance(stack.judge, LLMJudge) and isinstance(stack.repairer, LLMRepairer)
     assert stack.generator is not stack.judge.generator
     assert stack.judge.generator is not stack.repairer.generator
+    assert stack.judge.validate_quotes is True
+
+
+@pytest.mark.parametrize(
+    "candidate_quote,source_quote",
+    [
+        ("899", "799"),
+        ("899", ""),
+    ],
+)
+async def test_quote_aware_judge_retains_verified_fragments(candidate_quote, source_quote):
+    judge = LLMJudge(
+        FunctionGenerator(
+            lambda request: {
+                "status": "fail",
+                "score": 0,
+                "summary": "Wrong amount",
+                "issues": [
+                    {
+                        "criterion_id": "grounding",
+                        "message": "Wrong amount",
+                        "evidence": "record amount is 799",
+                        "candidate_quote": candidate_quote,
+                        "source_quote": source_quote,
+                    }
+                ],
+            }
+        ),
+        validate_quotes=True,
+    )
+    response = await judge.judge(JudgeRequest(task(), {"answer": "899"}, 0))
+    assert response.verdict.issues[0].candidate_quote == candidate_quote
+    assert response.verdict.issues[0].source_quote == source_quote
+
+
+@pytest.mark.parametrize(
+    "candidate_quote,source_quote",
+    [
+        ("made-up claim", "799"),
+        ("899", "made-up evidence"),
+        ("", "799"),
+        ("899", "79"),
+    ],
+)
+async def test_quote_aware_judge_rejects_fabricated_feedback(candidate_quote, source_quote):
+    judge = LLMJudge(
+        FunctionGenerator(
+            lambda request: {
+                "status": "fail",
+                "score": 0,
+                "summary": "Wrong amount",
+                "issues": [
+                    {
+                        "criterion_id": "grounding",
+                        "message": "Wrong amount",
+                        "evidence": "record amount is 799",
+                        "candidate_quote": candidate_quote,
+                        "source_quote": source_quote,
+                    }
+                ],
+            }
+        ),
+        validate_quotes=True,
+    )
+    with pytest.raises(AgentResponseError) as exc:
+        await judge.judge(JudgeRequest(task(), {"answer": "899"}, 0))
+    assert exc.value.usage.total_tokens == 0
+
+
+async def test_quote_match_handles_nested_text_and_whitespace_without_using_history():
+    current = QualityTask(
+        source={"reviews": [{"text": "Delivery is\n unavailable."}]},
+        prompt="Summarize",
+        criteria=(Criterion("grounding", "Use the evidence"),),
+    )
+    judge = LLMJudge(
+        FunctionGenerator(
+            lambda request: {
+                "status": "fail",
+                "score": 0,
+                "summary": "Unsupported",
+                "issues": [
+                    {
+                        "criterion_id": "grounding",
+                        "message": "Wrong service",
+                        "evidence": "Review says unavailable",
+                        "candidate_quote": "Delivery is available",
+                        "source_quote": "Delivery is unavailable.",
+                    }
+                ],
+            }
+        ),
+        validate_quotes=True,
+    )
+    response = await judge.judge(JudgeRequest(current, {"answer": "Delivery is available"}, 0))
+    assert response.verdict.status == "fail"
 
 
 async def test_compatible_client_ignores_malformed_proxy_environment(monkeypatch):

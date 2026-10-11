@@ -23,7 +23,18 @@ class ProviderError(RuntimeError):
         self, message: str, *, category: str = "provider_error", usage: Usage | None = None
     ) -> None:
         super().__init__(message)
-        self.category = category
+        self.category = (
+            category
+            if category
+            in {
+                "provider_error",
+                "timeout",
+                "http_error",
+                "invalid_response",
+                "incomplete_response",
+            }
+            else "provider_error"
+        )
         self.usage = usage or Usage()
 
 

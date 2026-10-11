@@ -59,6 +59,8 @@ class _IssuePayload(BaseModel):
     message: str = Field(min_length=1)
     evidence: str = ""
     suggestion: str = ""
+    candidate_quote: str = ""
+    source_quote: str = ""
 
 
 class _VerdictPayload(BaseModel):
@@ -68,6 +70,37 @@ class _VerdictPayload(BaseModel):
     score: float = Field(ge=0, le=1)
     summary: str = Field(min_length=1)
     issues: list[_IssuePayload] = Field(default_factory=list)
+
+
+class _QuotedIssuePayload(_IssuePayload):
+    message: str = Field(min_length=1, max_length=600)
+    evidence: str = Field(min_length=1, max_length=900)
+    suggestion: str = Field(default="", max_length=400)
+    candidate_quote: str = Field(min_length=1, max_length=400)
+    source_quote: str = Field(default="", max_length=600)
+
+
+class _QuotedVerdictPayload(_VerdictPayload):
+    summary: str = Field(min_length=1, max_length=600)
+    issues: list[_QuotedIssuePayload] = Field(default_factory=list, max_length=6)  # type: ignore[assignment]
+
+
+def _contains_quote(quote: str, value: Any) -> bool:
+    needle = " ".join(quote.split())
+    if not needle:
+        return False
+    if isinstance(value, str) and needle in " ".join(value.split()):
+        return True
+    if isinstance(value, dict):
+        return any(_contains_quote(quote, item) for item in value.values()) or needle == " ".join(
+            json.dumps(value, ensure_ascii=False).split()
+        )
+    if isinstance(value, list):
+        return any(_contains_quote(quote, item) for item in value) or needle == " ".join(
+            json.dumps(value, ensure_ascii=False).split()
+        )
+    # Literal numeric/boolean evidence must match a whole value, not a substring.
+    return needle == json.dumps(value, ensure_ascii=False)
 
 
 class _RepairPayload(BaseModel):
@@ -90,11 +123,13 @@ class LLMJudge:
 
     model_calls_per_request = 1
 
-    def __init__(self, generator: Generator) -> None:
+    def __init__(self, generator: Generator, *, validate_quotes: bool = False) -> None:
         self.generator = generator
+        self.validate_quotes = validate_quotes
 
     async def judge(self, request: JudgeRequest) -> JudgeResponse:
-        schema = _VerdictPayload.model_json_schema()
+        payload_type = _QuotedVerdictPayload if self.validate_quotes else _VerdictPayload
+        schema = payload_type.model_json_schema()
         generation = await self.generator.generate(
             GenerationRequest(
                 source={
@@ -130,7 +165,23 @@ class LLMJudge:
                     "For fail, include at least one issue with a concrete candidate claim and "
                     "source evidence. For pass, issues must be empty; score is a rubric rating, "
                     "not a calibrated probability. Return exactly the JSON schema without extra "
-                    "keys.\nTask-specific instructions:\n" + request.task.instructions
+                    "keys.\nTask-specific instructions:\n"
+                    + request.task.instructions
+                    + (
+                        "\nEvery issue needs candidate_quote copied exactly from the CURRENT "
+                        "candidate. source_quote must be an exact short quotation from supplied "
+                        "business context, not from an earlier verdict. For unsupported claims "
+                        "with no relevant source quotation, leave source_quote empty and explain "
+                        "the missing support in evidence. Quote presence is programmatically "
+                        "checked. Do not report an issue that your own explanation concludes is "
+                        "actually supported. Output only your final conclusions, no deliberation "
+                        "or 'wait, re-read' discussion. Group related errors into at most six "
+                        "issues. Keep summary under 240 characters, message under 320, evidence "
+                        "under 480 and suggestion under 240. Check all criteria even though "
+                        "feedback is concise."
+                        if self.validate_quotes
+                        else ""
+                    )
                 ),
                 previous=json_copy(request.candidate),
             )
@@ -139,12 +190,20 @@ class LLMJudge:
             content = generation.content
             if isinstance(content, str):
                 content = json.loads(content)
-            payload = _VerdictPayload.model_validate(content)
+            payload = payload_type.model_validate(content)
             if payload.status not in ("pass", "fail", "unknown"):
                 raise ValueError("invalid status")
             allowed = {criterion.id for criterion in request.task.criteria} | {"general"}
             if any(issue.criterion_id not in allowed for issue in payload.issues):
                 raise ValueError("unknown criterion id")
+            if self.validate_quotes:
+                for issue in payload.issues:
+                    if not _contains_quote(issue.candidate_quote, request.candidate):
+                        raise ValueError("candidate quotation not found")
+                    if issue.source_quote and not _contains_quote(
+                        issue.source_quote, request.task.source
+                    ):
+                        raise ValueError("source quotation not found")
             verdict = JudgeVerdict(
                 status=payload.status,  # type: ignore[arg-type]
                 score=payload.score,
@@ -291,6 +350,7 @@ def make_qwen3_8b_stack(
     timeout: float = 60.0,
     max_output_tokens: int = 4096,
     transport: Any = None,
+    validate_judge_quotes: bool = True,
 ) -> Qwen3Stack:
     """Build generation, judge and repair roles on Bailian's Qwen3-8B endpoint."""
     if thinking_budget <= 0:
@@ -309,7 +369,11 @@ def make_qwen3_8b_stack(
         )
 
     generation_model = adapter()
-    return Qwen3Stack(generation_model, LLMJudge(adapter()), LLMRepairer(adapter()))
+    return Qwen3Stack(
+        generation_model,
+        LLMJudge(adapter(), validate_quotes=validate_judge_quotes),
+        LLMRepairer(adapter()),
+    )
 
 
 __all__ = [
